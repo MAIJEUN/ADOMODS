@@ -14,7 +14,7 @@ export default function Home() {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">ADOMODS</h1>
+      {/* 제목 제거 (헤더에 로고와 사이트명이 있으므로) */}
       <div className="mb-6">
         <SearchBar initialQuery={query} initialSort={sort} />
       </div>
