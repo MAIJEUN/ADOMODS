@@ -5,9 +5,11 @@ import { RefreshCcw, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { useMods } from "@/components/mods-provider"
 import { clearModsStorage } from "@/lib/storage"
+import { useLanguage } from "@/components/language-provider"
 
 export function DataRefreshButton() {
   const { refreshMods } = useMods()
+  const { t } = useLanguage()
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleRefresh = async () => {
@@ -31,12 +33,12 @@ export function DataRefreshButton() {
       {isRefreshing ? (
         <>
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          새로고침 중...
+          {t("refresh.refreshing")}
         </>
       ) : (
         <>
           <RefreshCcw className="h-4 w-4 mr-2" />
-          데이터 새로고침
+          {t("refresh.button")}
         </>
       )}
     </Button>

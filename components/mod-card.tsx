@@ -3,10 +3,11 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download, Calendar, User } from "lucide-react"
+import { useLanguage } from "@/components/language-provider"
 import Image from "next/image"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
-import { ko } from "date-fns/locale"
+import { ko, enUS } from "date-fns/locale"
 import { useState } from "react"
 
 interface ModCardProps {
@@ -26,6 +27,7 @@ interface ModCardProps {
 }
 
 export function ModCard({ mod }: ModCardProps) {
+  const { language, t } = useLanguage()
   const [imageError, setImageError] = useState(false)
 
   // Discord avatar URL - 개선된 URL 구성
@@ -34,14 +36,24 @@ export function ModCard({ mod }: ModCardProps) {
       ? `https://cdn.discordapp.com/avatars/${mod.user}/${mod.cachedAvatar}.webp?size=80`
       : "/default-avatar.png" // 기본 아바타 이미지 사용
 
-  // Format upload time
+  // Format upload time with correct locale
   const uploadTime = mod.uploadedTimestamp ? new Date(mod.uploadedTimestamp) : new Date()
-  const timeAgo = formatDistanceToNow(uploadTime, { addSuffix: true, locale: ko })
+  const timeAgo = formatDistanceToNow(uploadTime, {
+    addSuffix: true,
+    locale: language === "ko" ? ko : enUS,
+  })
 
-  // Get short description (first paragraph)
-  const shortDescription = mod.description
-    ? mod.description.split("\n")[0].replace(/^#\s*/, "")
-    : "No description available."
+  // Get short description (첫 번째 헤더 제거 후 첫 번째 단락)
+  const shortDescription = (() => {
+    // 마크다운에서 첫 번째 줄이 # 헤더인 경우 제거
+    const lines = mod.description?.split("\n") || []
+    const nonHeaderLines = lines.filter((line) => !line.trim().startsWith("#"))
+
+    // 첫 번째 비어있지 않은 텍스트 줄 찾기
+    const firstTextLine = nonHeaderLines.find((line) => line.trim() !== "")
+
+    return firstTextLine?.trim() || t("mod.noDescription")
+  })()
 
   return (
     <Card className="h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow dark:border-slate-700">
@@ -81,12 +93,12 @@ export function ModCard({ mod }: ModCardProps) {
       </CardContent>
       <CardFooter className="flex justify-between pt-2 border-t dark:border-slate-700">
         <Button variant="ghost" size="sm" asChild>
-          <Link href={`/mod/${mod.id}`}>자세히 보기</Link>
+          <Link href={`/mod/${mod.id}`}>{t("mod.details")}</Link>
         </Button>
         <Button size="sm" asChild>
           <a href={mod.parsedDownload || mod.download} target="_blank" rel="noopener noreferrer">
             <Download className="h-4 w-4 mr-1" />
-            다운로드
+            {t("mod.download")}
           </a>
         </Button>
       </CardFooter>

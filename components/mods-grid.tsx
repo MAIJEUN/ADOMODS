@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { ModCard } from "@/components/mod-card"
 import { SortIcon } from "@/components/sort-icon"
 import { useMods } from "@/components/mods-provider"
+import { useLanguage } from "@/components/language-provider"
 import { Button } from "@/components/ui/button"
 import { RefreshCcw, Loader2 } from "lucide-react"
 
@@ -42,6 +43,7 @@ function filterAndSortMods(mods: any[], query = "", sort = "uploadedTimestamp") 
 
 export default function ModsGrid({ query = "", sort = "uploadedTimestamp" }: ModsGridProps) {
   const { mods, isLoading, error, lastUpdated, refreshMods } = useMods()
+  const { language, t } = useLanguage()
 
   // 필터링 및 정렬된 모드 목록
   const filteredMods = useMemo(() => {
@@ -52,21 +54,21 @@ export default function ModsGrid({ query = "", sort = "uploadedTimestamp" }: Mod
 
   // 마지막 업데이트 시간 포맷팅
   const formattedLastUpdated = lastUpdated
-    ? new Intl.DateTimeFormat("ko-KR", {
+    ? new Intl.DateTimeFormat(language === "ko" ? "ko-KR" : "en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
       }).format(lastUpdated)
-    : "알 수 없음"
+    : t("header.unknown")
 
   // 로딩 중일 때
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">데이터를 불러오는 중...</span>
+        <span className="ml-2">{t("mods.loading")}</span>
       </div>
     )
   }
@@ -75,13 +77,13 @@ export default function ModsGrid({ query = "", sort = "uploadedTimestamp" }: Mod
   if (filteredMods.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-lg font-medium mb-2">검색 결과가 없습니다</p>
+        <p className="text-lg font-medium mb-2">{t("mods.noResults")}</p>
         <p className="text-muted-foreground mb-4">
-          {query ? `"${query}"에 대한 검색 결과가 없습니다.` : "모드를 찾을 수 없습니다."}
+          {query ? `${t("mods.noResultsFor")} "${query}"` : t("mods.notFound")}
         </p>
         <Button onClick={refreshMods} variant="outline">
           <RefreshCcw className="h-4 w-4 mr-2" />
-          데이터 새로고침
+          {t("mods.refreshData")}
         </Button>
       </div>
     )
@@ -97,22 +99,21 @@ export default function ModsGrid({ query = "", sort = "uploadedTimestamp" }: Mod
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
         <p className="text-sm text-muted-foreground">
-          {filteredMods.length}개의 모드 {query && `(검색어: "${query}")`}
+          {filteredMods.length} {t("mods.count")} {query && `(${t("mods.searchResult")}: "${query}")`}
         </p>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
           <span className="flex items-center">
-            마지막 업데이트: {formattedLastUpdated}
+            {t("header.lastUpdated")}: {formattedLastUpdated}
             <Button onClick={refreshMods} variant="ghost" size="icon" className="ml-1 h-6 w-6">
               <RefreshCcw className="h-3 w-3" />
             </Button>
           </span>
 
           <span className="font-medium flex items-center">
-            정렬:
-            {sort === "uploadedTimestamp" && " 최신순"}
-            {sort === "name" && " 이름순"}
-            {sort === "version" && " 버전순"}
+            {t("search.sortBy")}:{sort === "uploadedTimestamp" && ` ${t("search.sortByLatest")}`}
+            {sort === "name" && ` ${t("search.sortByName")}`}
+            {sort === "version" && ` ${t("search.sortByVersion")}`}
             <SortIcon sort={sort} />
           </span>
         </div>

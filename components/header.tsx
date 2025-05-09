@@ -3,6 +3,8 @@
 import { useMods } from "@/components/mods-provider"
 import { DataRefreshButton } from "@/components/data-refresh-button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { LanguageToggle } from "@/components/language-toggle"
+import { useLanguage } from "@/components/language-provider"
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -12,6 +14,7 @@ export function Header() {
   const { lastUpdated, error } = useMods()
   const [isOnline, setIsOnline] = useState(true)
   const { theme } = useTheme()
+  const { t } = useLanguage()
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
 
   // 실제 적용되는 테마 감지
@@ -36,7 +39,7 @@ export function Header() {
   }, [theme])
 
   // 테마에 따라 로고 이미지 선택 (실제 적용되는 테마 기준)
-  const logoSrc = resolvedTheme === "dark" ? "/logo.png" : "/logo-dark.png"
+  const logoSrc = resolvedTheme === "dark" ? "/logo-white.png" : "/logo-black.png"
 
   // 네트워크 상태 모니터링
   useEffect(() => {
@@ -59,14 +62,14 @@ export function Header() {
 
   // 마지막 업데이트 시간 포맷팅
   const formattedLastUpdated = lastUpdated
-    ? new Intl.DateTimeFormat("ko-KR", {
+    ? new Intl.DateTimeFormat(t("language.ko") === "한국어" ? "ko-KR" : "en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
       }).format(lastUpdated)
-    : "알 수 없음"
+    : t("header.unknown")
 
   return (
     <div className="bg-muted/40 border-b dark:border-slate-700 dark:bg-slate-900/60">
@@ -84,20 +87,25 @@ export function Header() {
                 priority
               />
             </div>
-            <span className="text-xl font-bold tracking-tight">ADOMODS</span>
+            <span className="text-xl font-bold tracking-tight">{t("app.title")}</span>
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
 
         {/* 상태 정보 및 버튼 */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-2 py-2">
           <div className="flex items-center gap-2">
-            <div className="text-sm text-muted-foreground">마지막 업데이트: {formattedLastUpdated}</div>
+            <div className="text-sm text-muted-foreground">
+              {t("header.lastUpdated")}: {formattedLastUpdated}
+            </div>
 
             {/* 네트워크 상태 표시 */}
             {!isOnline && (
               <div className="text-sm bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-2 py-0.5 rounded-md">
-                오프라인 모드
+                {t("header.offlineMode")}
               </div>
             )}
           </div>

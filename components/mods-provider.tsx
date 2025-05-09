@@ -11,6 +11,7 @@ interface ModsContextType {
   error: string | null
   lastUpdated: Date | null
   refreshMods: () => Promise<void>
+  getMod: (id: string) => Promise<any>
 }
 
 // 기본값으로 컨텍스트 생성
@@ -20,10 +21,41 @@ const ModsContext = createContext<ModsContextType>({
   error: null,
   lastUpdated: null,
   refreshMods: async () => {},
+  getMod: async () => null,
 })
 
 // 컨텍스트 훅
 export const useMods = () => useContext(ModsContext)
+
+// 모드 데이터 유효성 검사
+function validateModData(mods: any[]): any[] {
+  if (!Array.isArray(mods)) {
+    console.error("Mods data is not an array:", mods)
+    return []
+  }
+
+  return mods.filter((mod) => {
+    // 필수 필드 확인
+    if (!mod || typeof mod !== "object") {
+      console.error("Invalid mod entry:", mod)
+      return false
+    }
+
+    // ID 확인
+    if (!mod.id) {
+      console.error("Mod missing ID:", mod)
+      return false
+    }
+
+    // 버전 정보 확인 (이미 필터링 로직이 있지만 추가 검증)
+    if (!mod.version || mod.version.trim() === "") {
+      console.error("Mod missing version:", mod)
+      return false
+    }
+
+    return true
+  })
+}
 
 // API에서 모드 데이터 가져오기
 async function fetchModsFromApi() {
@@ -42,15 +74,45 @@ async function fetchModsFromApi() {
     }
 
     const data = await res.json()
+
+    // 데이터 유효성 검사
+    if (!Array.isArray(data)) {
+      console.error("API returned non-array data:", data)
+      throw new Error("API가 유효하지 않은 데이터 형식을 반환했습니다.")
+    }
+
     // 버전 정보가 있는 모드만 필터링
-    const filteredData = Array.isArray(data) ? data.filter((mod) => mod.version && mod.version.trim() !== "") : []
-    return filteredData
+    const filteredData = data.filter((mod) => mod.version && mod.version.trim() !== "")
+
+    // 추가 데이터 검증
+    return validateModData(filteredData)
   } catch (error) {
     console.error("Error fetching mods from API:", error)
     // 더 자세한 오류 정보 제공
     if (error instanceof TypeError && error.message === "Failed to fetch") {
       throw new Error("네트워크 연결 문제가 발생했습니다. 인터넷 연결을 확인해주세요.")
     }
+    throw error
+  }
+}
+
+// 특정 ID의 모드 가져오기
+async function fetchModById(id: string) {
+  try {
+    const res = await fetch(`/api/mods/${id}`, {
+      headers: {
+        Accept: "application/json",
+      },
+      signal: AbortSignal.timeout(10000),
+    })
+
+    if (!res.ok) {
+      throw new Error(`API responded with status: ${res.status}`)
+    }
+
+    return await res.json()
+  } catch (error) {
+    console.error(`Error fetching mod with ID ${id}:`, error)
     throw error
   }
 }
@@ -103,26 +165,58 @@ export function ModsProvider({ children }: { children: ReactNode }) {
 
           // API 요청 실패 시 저장된 데이터 또는 모의 데이터 사용
           if (storedMods && storedMods.length > 0) {
-            setMods(storedMods)
+            // 저장된 데이터 검증
+            const validatedStoredMods = validateModData(storedMods)
+            setMods(validatedStoredMods)
             setError(`API 요청 실패: 저장된 데이터를 사용합니다. (${apiError.message})`)
           } else {
-            setMods(mockMods)
+            // 모의 데이터 검증
+            const validatedMockMods = validateModData(mockMods)
+            setMods(validatedMockMods)
             setError(`API 요청 실패: 모의 데이터를 사용합니다. (${apiError.message})`)
           }
         }
       } else {
         // 저장된 데이터 사용
         console.log("Using stored data...")
-        setMods(storedMods)
+        // 저장된 데이터 검증
+        const validatedStoredMods = validateModData(storedMods)
+        setMods(validatedStoredMods)
         const lastFetchedTime = getLastFetchedTime()
         setLastUpdated(lastFetchedTime ? new Date(lastFetchedTime) : new Date())
       }
     } catch (e: any) {
       console.error("Error in fetchMods:", e)
       setError(`데이터를 불러오는 중 오류가 발생했습니다: ${e.message}`)
-      setMods(mockMods)
+      // 모의 데이터 검증
+      const validatedMockMods = validateModData(mockMods)
+      setMods(validatedMockMods)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // 특정 ID의 모드 가져오기
+  const getMod = async (id: string) => {
+    try {
+      // 먼저 현재 로드된 모드 목록에서 찾기
+      const foundMod = mods.find((mod) => mod.id === id)
+      if (foundMod) {
+        return foundMod
+      }
+
+      // 로드된 목록에 없으면 API에서 직접 가져오기
+      return await fetchModById(id)
+    } catch (error) {
+      console.error(`Error getting mod with ID ${id}:`, error)
+
+      // 모의 데이터에서 찾기
+      const mockMod = mockMods.find((mod) => mod.id === id)
+      if (mockMod) {
+        return mockMod
+      }
+
+      throw error
     }
   }
 
@@ -145,6 +239,7 @@ export function ModsProvider({ children }: { children: ReactNode }) {
         error,
         lastUpdated,
         refreshMods,
+        getMod,
       }}
     >
       {children}

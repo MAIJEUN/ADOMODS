@@ -7,6 +7,7 @@ import { useRouter, usePathname } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, SlidersHorizontal } from "lucide-react"
+import { useLanguage } from "@/components/language-provider"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,7 @@ interface SearchBarProps {
 export default function SearchBar({ initialQuery = "", initialSort = "uploadedTimestamp" }: SearchBarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState(initialQuery)
   const [sortBy, setSortBy] = useState(initialSort)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -69,7 +71,7 @@ export default function SearchBar({ initialQuery = "", initialSort = "uploadedTi
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="모드 검색..."
+          placeholder={t("search.placeholder")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-9"
@@ -81,18 +83,18 @@ export default function SearchBar({ initialQuery = "", initialSort = "uploadedTi
         <DropdownMenuTrigger asChild>
           <Button variant="outline" type="button" disabled={isSubmitting}>
             <SlidersHorizontal className="h-4 w-4 mr-2" />
-            {sortBy === "uploadedTimestamp" && "최신순"}
-            {sortBy === "name" && "이름순"}
-            {sortBy === "version" && "버전순"}
+            {sortBy === "uploadedTimestamp" && t("search.sortByLatest")}
+            {sortBy === "name" && t("search.sortByName")}
+            {sortBy === "version" && t("search.sortByVersion")}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>정렬 기준</DropdownMenuLabel>
+          <DropdownMenuLabel>{t("search.sortBy")}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuRadioGroup value={sortBy} onValueChange={handleSortChange}>
-            <DropdownMenuRadioItem value="uploadedTimestamp">최신순</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="name">이름순</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="version">버전순</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="uploadedTimestamp">{t("search.sortByLatest")}</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="name">{t("search.sortByName")}</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="version">{t("search.sortByVersion")}</DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -101,10 +103,10 @@ export default function SearchBar({ initialQuery = "", initialSort = "uploadedTi
         {isSubmitting ? (
           <>
             <Search className="h-4 w-4 mr-2 animate-spin" />
-            검색 중...
+            {t("search.searching")}
           </>
         ) : (
-          "검색"
+          t("search.button")
         )}
       </Button>
     </form>

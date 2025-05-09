@@ -5,6 +5,7 @@ import "./globals.css"
 import { ModsProvider } from "@/components/mods-provider"
 import { Header } from "@/components/header"
 import { ThemeProvider } from "@/components/theme-provider"
+import { LanguageProvider } from "@/components/language-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -23,10 +24,12 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider defaultTheme="system">
-          <ModsProvider>
-            <Header />
-            {children}
-          </ModsProvider>
+          <LanguageProvider>
+            <ModsProvider>
+              <Header />
+              {children}
+            </ModsProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>
