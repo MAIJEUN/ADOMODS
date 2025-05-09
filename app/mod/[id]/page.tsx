@@ -14,6 +14,7 @@ import { useMods } from "@/components/mods-provider"
 export default function ModPage({ params }: { params: { id: string } }) {
   const { mods, isLoading, error } = useMods()
   const [mod, setMod] = useState<any>(null)
+  const [imageError, setImageError] = useState(false)
 
   // ID로 모드 찾기
   useEffect(() => {
@@ -49,10 +50,11 @@ export default function ModPage({ params }: { params: { id: string } }) {
     )
   }
 
-  // Discord avatar URL
-  const avatarUrl = mod.cachedAvatar
-    ? `https://cdn.discordapp.com/avatars/${mod.user}/${mod.cachedAvatar}.webp?size=128`
-    : `https://cdn.discordapp.com/embed/avatars/0.png`
+  // Discord avatar URL - 개선된 URL 구성
+  const avatarUrl =
+    !imageError && mod.cachedAvatar
+      ? `https://cdn.discordapp.com/avatars/${mod.user}/${mod.cachedAvatar}.webp?size=128`
+      : "/default-avatar.png" // 기본 아바타 이미지 사용
 
   // Format upload time
   const uploadTime = mod.uploadedTimestamp ? new Date(mod.uploadedTimestamp) : new Date()
@@ -74,15 +76,14 @@ export default function ModPage({ params }: { params: { id: string } }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 relative rounded-full overflow-hidden border dark:border-slate-700">
+            <div className="w-16 h-16 relative rounded-full overflow-hidden border dark:border-slate-700 bg-muted">
               <Image
                 src={avatarUrl || "/placeholder.svg"}
                 alt={`${mod.cachedUsername} avatar`}
                 fill
                 className="object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement
-                  target.src = "https://cdn.discordapp.com/embed/avatars/0.png"
+                onError={() => {
+                  setImageError(true)
                 }}
               />
             </div>

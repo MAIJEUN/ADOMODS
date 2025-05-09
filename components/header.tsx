@@ -6,10 +6,15 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useTheme } from "@/components/theme-provider"
 
 export function Header() {
   const { lastUpdated, error } = useMods()
   const [isOnline, setIsOnline] = useState(true)
+  const { theme } = useTheme()
+
+  // 테마에 따라 로고 이미지 선택
+  const logoSrc = theme === "dark" ? "/logo.png" : "/logo-dark.png"
 
   // 네트워크 상태 모니터링
   useEffect(() => {
@@ -48,7 +53,14 @@ export function Header() {
         <div className="flex items-center justify-between py-2 border-b dark:border-slate-700">
           <Link href="/" className="flex items-center gap-2">
             <div className="relative w-10 h-10 overflow-hidden">
-              <Image src="/logo.png" alt="ADOMODS 로고" width={40} height={40} className="object-contain" />
+              <Image
+                src={logoSrc || "/placeholder.svg"}
+                alt="ADOMODS 로고"
+                width={40}
+                height={40}
+                className="object-contain"
+                priority
+              />
             </div>
             <span className="text-xl font-bold tracking-tight">ADOMODS</span>
           </Link>

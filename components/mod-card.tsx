@@ -1,10 +1,13 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Download, Calendar } from "lucide-react"
+import { Download, Calendar, User } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ko } from "date-fns/locale"
+import { useState } from "react"
 
 interface ModCardProps {
   mod: {
@@ -23,10 +26,13 @@ interface ModCardProps {
 }
 
 export function ModCard({ mod }: ModCardProps) {
-  // Discord avatar URL
-  const avatarUrl = mod.cachedAvatar
-    ? `https://cdn.discordapp.com/avatars/${mod.user}/${mod.cachedAvatar}.webp?size=80`
-    : `https://cdn.discordapp.com/embed/avatars/0.png`
+  const [imageError, setImageError] = useState(false)
+
+  // Discord avatar URL - 개선된 URL 구성
+  const avatarUrl =
+    !imageError && mod.cachedAvatar
+      ? `https://cdn.discordapp.com/avatars/${mod.user}/${mod.cachedAvatar}.webp?size=80`
+      : "/default-avatar.png" // 기본 아바타 이미지 사용
 
   // Format upload time
   const uploadTime = mod.uploadedTimestamp ? new Date(mod.uploadedTimestamp) : new Date()
@@ -41,22 +47,24 @@ export function ModCard({ mod }: ModCardProps) {
     <Card className="h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow dark:border-slate-700">
       <CardHeader className="pb-2">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 relative rounded-full overflow-hidden flex-shrink-0 border dark:border-slate-700">
+          <div className="w-12 h-12 relative rounded-full overflow-hidden flex-shrink-0 border dark:border-slate-700 bg-muted">
             <Image
               src={avatarUrl || "/placeholder.svg"}
               alt={`${mod.cachedUsername} avatar`}
               fill
               className="object-cover"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                target.src = "https://cdn.discordapp.com/embed/avatars/0.png"
+              onError={() => {
+                setImageError(true)
               }}
             />
           </div>
           <div>
             <CardTitle className="text-lg line-clamp-1">{mod.name}</CardTitle>
             <div className="text-sm text-muted-foreground flex items-center gap-1">
-              <span>{mod.cachedUsername}</span>
+              <span className="flex items-center">
+                <User className="h-3 w-3 mr-1" />
+                {mod.cachedUsername}
+              </span>
               <span className="mx-1">•</span>
               <span>v{mod.version}</span>
             </div>
