@@ -19,7 +19,7 @@ export function MarkdownRenderer({ content, className = "" }: MarkdownRendererPr
   const { theme } = useTheme()
   const [resolvedTheme, setResolvedTheme] = React.useState<"light" | "dark">("light")
 
-  // 실제 적용되는 테마 감지
+  // 실제 적용되는 테마 ���지
   React.useEffect(() => {
     try {
       // 테마가 'system'인 경우 시스템 설정 확인
