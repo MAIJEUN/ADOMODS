@@ -4,11 +4,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Download, Calendar, User } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
-import Image from "next/image"
+import { DiscordAvatar } from "@/components/discord-avatar"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ko, enUS } from "date-fns/locale"
-import { useState } from "react"
 
 interface ModCardProps {
   mod: {
@@ -28,13 +27,6 @@ interface ModCardProps {
 
 export function ModCard({ mod }: ModCardProps) {
   const { language, t } = useLanguage()
-  const [imageError, setImageError] = useState(false)
-
-  // Discord avatar URL - 개선된 URL 구성
-  const avatarUrl =
-    !imageError && mod.cachedAvatar
-      ? `https://cdn.discordapp.com/avatars/${mod.user}/${mod.cachedAvatar}.webp?size=80`
-      : "/default-avatar.png" // 기본 아바타 이미지 사용
 
   // Format upload time with correct locale
   const uploadTime = mod.uploadedTimestamp ? new Date(mod.uploadedTimestamp) : new Date()
@@ -59,15 +51,13 @@ export function ModCard({ mod }: ModCardProps) {
     <Card className="h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow dark:border-slate-700">
       <CardHeader className="pb-2">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 relative rounded-full overflow-hidden flex-shrink-0 border dark:border-slate-700 bg-muted">
-            <Image
-              src={avatarUrl || "/placeholder.svg"}
-              alt={`${mod.cachedUsername} avatar`}
-              fill
-              className="object-cover"
-              onError={() => {
-                setImageError(true)
-              }}
+          <div className="w-12 h-12 relative rounded-full overflow-hidden flex-shrink-0 border dark:border-slate-700">
+            <DiscordAvatar
+              userId={mod.user}
+              avatarHash={mod.cachedAvatar}
+              username={mod.cachedUsername}
+              size={48}
+              className="w-full h-full rounded-full"
             />
           </div>
           <div>

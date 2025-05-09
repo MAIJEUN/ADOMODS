@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, Download, ExternalLink, Calendar, User, Loader2, AlertTriangle } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
 import { format } from "date-fns"
 import { ko, enUS } from "date-fns/locale"
 import { useMods } from "@/components/mods-provider"
 import { useLanguage } from "@/components/language-provider"
+import { DiscordAvatar } from "@/components/discord-avatar"
 
 // 간단한 마크다운 파서 (기본 기능만 지원)
 function SimpleMarkdown({ content }: { content: string }) {
@@ -50,7 +50,6 @@ export default function ModPage({ params }: { params: { id: string } }) {
   const { language, t } = useLanguage()
   const [mod, setMod] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [imageError, setImageError] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // ID로 모드 가져오기
@@ -116,12 +115,6 @@ export default function ModPage({ params }: { params: { id: string } }) {
   const modDownload = mod.parsedDownload || mod.download || "#"
   const modUser = mod.user || ""
 
-  // Discord avatar URL
-  const avatarUrl =
-    !imageError && mod.cachedAvatar
-      ? `https://cdn.discordapp.com/avatars/${modUser}/${mod.cachedAvatar}.webp?size=128`
-      : "/default-avatar.png"
-
   // Format upload time with correct locale
   const uploadTime = mod.uploadedTimestamp ? new Date(mod.uploadedTimestamp) : new Date()
   const formattedDate = format(uploadTime, "PPP", {
@@ -147,15 +140,13 @@ export default function ModPage({ params }: { params: { id: string } }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 relative rounded-full overflow-hidden border dark:border-slate-700 bg-muted">
-              <Image
-                src={avatarUrl || "/placeholder.svg"}
-                alt={`${modUsername} avatar`}
-                fill
-                className="object-cover"
-                onError={() => {
-                  setImageError(true)
-                }}
+            <div className="w-16 h-16 relative rounded-full overflow-hidden border dark:border-slate-700">
+              <DiscordAvatar
+                userId={modUser}
+                avatarHash={mod.cachedAvatar}
+                username={modUsername}
+                size={64}
+                className="w-full h-full rounded-full"
               />
             </div>
             <div>
