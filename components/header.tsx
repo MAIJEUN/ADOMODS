@@ -12,9 +12,31 @@ export function Header() {
   const { lastUpdated, error } = useMods()
   const [isOnline, setIsOnline] = useState(true)
   const { theme } = useTheme()
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
 
-  // 테마에 따라 로고 이미지 선택
-  const logoSrc = theme === "dark" ? "/logo.png" : "/logo-dark.png"
+  // 실제 적용되는 테마 감지
+  useEffect(() => {
+    // 테마가 'system'인 경우 시스템 설정 확인
+    if (theme === "system") {
+      const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches
+      setResolvedTheme(isDarkMode ? "dark" : "light")
+
+      // 시스템 테마 변경 감지
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+      const handleChange = (e: MediaQueryListEvent) => {
+        setResolvedTheme(e.matches ? "dark" : "light")
+      }
+
+      mediaQuery.addEventListener("change", handleChange)
+      return () => mediaQuery.removeEventListener("change", handleChange)
+    } else {
+      // 'system'이 아닌 경우 직접 설정된 테마 사용
+      setResolvedTheme(theme as "light" | "dark")
+    }
+  }, [theme])
+
+  // 테마에 따라 로고 이미지 선택 (실제 적용되는 테마 기준)
+  const logoSrc = resolvedTheme === "dark" ? "/logo.png" : "/logo-dark.png"
 
   // 네트워크 상태 모니터링
   useEffect(() => {
@@ -51,13 +73,13 @@ export function Header() {
       <div className="container mx-auto px-4 py-2">
         {/* 로고와 사이트 이름 */}
         <div className="flex items-center justify-between py-2 border-b dark:border-slate-700">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="relative w-10 h-10 overflow-hidden">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="relative w-12 h-12 overflow-hidden">
               <Image
                 src={logoSrc || "/placeholder.svg"}
                 alt="ADOMODS 로고"
-                width={40}
-                height={40}
+                width={48}
+                height={48}
                 className="object-contain"
                 priority
               />

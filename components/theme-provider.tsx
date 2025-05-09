@@ -27,6 +27,13 @@ export function ThemeProvider({ children, defaultTheme = "system", ...props }: T
   const [theme, setTheme] = useState<Theme>(defaultTheme)
 
   useEffect(() => {
+    const storedTheme = localStorage.getItem("theme") as Theme | null
+    if (storedTheme) {
+      setTheme(storedTheme)
+    }
+  }, [])
+
+  useEffect(() => {
     const root = window.document.documentElement
 
     root.classList.remove("light", "dark")
@@ -35,7 +42,16 @@ export function ThemeProvider({ children, defaultTheme = "system", ...props }: T
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
 
       root.classList.add(systemTheme)
-      return
+
+      // 시스템 테마 변경 감지
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+      const handleChange = (e: MediaQueryListEvent) => {
+        root.classList.remove("light", "dark")
+        root.classList.add(e.matches ? "dark" : "light")
+      }
+
+      mediaQuery.addEventListener("change", handleChange)
+      return () => mediaQuery.removeEventListener("change", handleChange)
     }
 
     root.classList.add(theme)
