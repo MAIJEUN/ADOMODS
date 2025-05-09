@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "ADOMODS",
-  description: "ADOFAI 게임의 모드 목록을 확인하고 다운로드할 수 있는 웹사이트입니다.",
+  description: "A website where you can check and download a list of mods for ADOFAI games.",
     generator: 'v0.dev'
 }
 
