@@ -18,9 +18,9 @@ export function DiscordAvatar({
   size = 80,
   className = "",
 }: DiscordAvatarProps) {
-  const [error, setError] = useState(false)
+  const [customAvatarError, setCustomAvatarError] = useState(false)
 
-  // 기본 아바타 URL 생성
+  // 사용자 ID에 기반한 기본 아바타 URL 생성
   const getDefaultAvatarUrl = () => {
     if (!userId) return "/default-avatar.png"
 
@@ -29,14 +29,15 @@ export function DiscordAvatar({
     return `https://cdn.discordapp.com/embed/avatars/${discriminator}.png`
   }
 
-  // 아바타 URL 생성
+  // 아바타 URL 결정
   const getAvatarUrl = () => {
-    if (error || !avatarHash || !userId) {
-      return getDefaultAvatarUrl()
+    // 커스텀 아바타가 있고 오류가 없는 경우
+    if (avatarHash && !customAvatarError && userId) {
+      return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png?size=${size}`
     }
 
-    // 디스코드 아바타 URL
-    return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png?size=${size}`
+    // 그 외의 경우 기본 아바타 사용
+    return getDefaultAvatarUrl()
   }
 
   return (
@@ -47,7 +48,10 @@ export function DiscordAvatar({
         width={size}
         height={size}
         className="object-cover"
-        onError={() => setError(true)}
+        onError={() => {
+          // 커스텀 아바타 로딩 실패 시 기본 아바타로 대체
+          setCustomAvatarError(true)
+        }}
         unoptimized
       />
     </div>
