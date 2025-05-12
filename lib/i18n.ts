@@ -74,6 +74,11 @@ export const translations: Record<Language, TranslationData> = {
     // 데이터 새로고침
     "refresh.button": "데이터 새로고침",
     "refresh.refreshing": "새로고침 중...",
+
+    // 푸터
+    "footer.allRightsReserved": "모든 권리 보유.",
+    "footer.license": "라이센스",
+    "footer.sourceCode": "소스 코드",
   },
   en: {
     // Common
@@ -135,6 +140,11 @@ export const translations: Record<Language, TranslationData> = {
     // Data Refresh
     "refresh.button": "Refresh Data",
     "refresh.refreshing": "Refreshing...",
+
+    // Footer
+    "footer.allRightsReserved": "All rights reserved.",
+    "footer.license": "License",
+    "footer.sourceCode": "Source Code",
   },
 }
 

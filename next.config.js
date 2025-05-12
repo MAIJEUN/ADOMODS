@@ -7,8 +7,14 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    domains: [
+      "cdn.discordapp.com",
+      "media.discordapp.net",
+      "images-ext-1.discordapp.net",
+      "images-ext-2.discordapp.net",
+    ],
     unoptimized: true,
   },
 }
 
-export default nextConfig
+module.exports = nextConfig

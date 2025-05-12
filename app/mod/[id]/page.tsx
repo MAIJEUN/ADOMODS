@@ -57,15 +57,12 @@ export default function ModPage({ params }: { params: { id: string } }) {
     async function loadMod() {
       setIsLoading(true)
       try {
-        console.log("Fetching mod with ID:", params.id)
         const modData = await getMod(params.id)
 
         if (modData) {
-          console.log("Found mod:", modData)
           setMod(modData)
           setError(null)
         } else {
-          console.log("Mod not found")
           setMod(null)
           setError(`${t("mod.notFound")}: '${params.id}'`)
         }
