@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Download, Calendar, User } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
-import { DiscordAvatar } from "@/components/discord-avatar"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ko, enUS } from "date-fns/locale"
@@ -19,8 +18,8 @@ interface ModCardProps {
     download: string
     parsedDownload?: string
     cachedUsername: string
-    cachedAvatar?: string
-    user: string
+    cachedAvatar?: string // 더 이상 사용하지 않음
+    user: string // 더 이상 사용하지 않음
     uploadedTimestamp: number
   }
 }
@@ -50,26 +49,15 @@ export function ModCard({ mod }: ModCardProps) {
   return (
     <Card className="h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow dark:border-slate-700">
       <CardHeader className="pb-2">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 relative rounded-full overflow-hidden flex-shrink-0 border dark:border-slate-700">
-            <DiscordAvatar
-              userId={mod.user}
-              avatarHash={mod.cachedAvatar}
-              username={mod.cachedUsername}
-              size={48}
-              className="w-full h-full rounded-full"
-            />
-          </div>
-          <div>
-            <CardTitle className="text-lg line-clamp-1">{mod.name}</CardTitle>
-            <div className="text-sm text-muted-foreground flex items-center gap-1">
-              <span className="flex items-center">
-                <User className="h-3 w-3 mr-1" />
-                {mod.cachedUsername}
-              </span>
-              <span className="mx-1">•</span>
-              <span>v{mod.version}</span>
-            </div>
+        <div>
+          <CardTitle className="text-lg line-clamp-1">{mod.name}</CardTitle>
+          <div className="text-sm text-muted-foreground flex items-center gap-1">
+            <span className="flex items-center">
+              <User className="h-3 w-3 mr-1" />
+              {mod.cachedUsername || t("mod.unknownUser")}
+            </span>
+            <span className="mx-1">•</span>
+            <span>v{mod.version}</span>
           </div>
         </div>
       </CardHeader>

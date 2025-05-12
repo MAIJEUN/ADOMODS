@@ -28,7 +28,7 @@ export default function RootLayout({
           <LanguageProvider>
             <ModsProvider>
               <Header />
-              <main className="flex-grow">{children}</main>
+              <main className="flex-grow pb-8">{children}</main>
               <Footer />
             </ModsProvider>
           </LanguageProvider>

@@ -9,7 +9,6 @@ import { format } from "date-fns"
 import { ko, enUS } from "date-fns/locale"
 import { useMods } from "@/components/mods-provider"
 import { useLanguage } from "@/components/language-provider"
-import { DiscordAvatar } from "@/components/discord-avatar"
 
 // 간단한 마크다운 파서 (기본 기능만 지원)
 function SimpleMarkdown({ content }: { content: string }) {
@@ -110,7 +109,6 @@ export default function ModPage({ params }: { params: { id: string } }) {
   const modUsername = mod.cachedUsername || t("mod.unknownUser")
   const modDescription = mod.description || t("mod.noDescription")
   const modDownload = mod.parsedDownload || mod.download || "#"
-  const modUser = mod.user || ""
 
   // Format upload time with correct locale
   const uploadTime = mod.uploadedTimestamp ? new Date(mod.uploadedTimestamp) : new Date()
@@ -136,25 +134,14 @@ export default function ModPage({ params }: { params: { id: string } }) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 relative rounded-full overflow-hidden border dark:border-slate-700">
-              <DiscordAvatar
-                userId={modUser}
-                avatarHash={mod.cachedAvatar}
-                username={modUsername}
-                size={64}
-                className="w-full h-full rounded-full"
-              />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">{modName}</h1>
-              <div className="flex items-center gap-4 text-muted-foreground">
-                <div className="flex items-center">
-                  <User className="h-4 w-4 mr-1" />
-                  {modUsername}
-                </div>
-                <div>v{modVersion}</div>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold">{modName}</h1>
+            <div className="flex items-center gap-4 text-muted-foreground mt-2">
+              <div className="flex items-center">
+                <User className="h-4 w-4 mr-1" />
+                {modUsername}
               </div>
+              <div>v{modVersion}</div>
             </div>
           </div>
 

@@ -3,15 +3,31 @@
 import Link from "next/link"
 import { Github } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
+import { useState } from "react"
+import { FooterHandle } from "@/components/footer-handle"
 
 export function Footer() {
   const { t } = useLanguage()
-
+  const [isExpanded, setIsExpanded] = useState(false)
   const currentYear = new Date().getFullYear()
 
+  const toggleExpanded = () => setIsExpanded(!isExpanded)
+
   return (
-    <footer className="mt-auto py-6 border-t dark:border-slate-700">
-      <div className="container mx-auto px-4">
+    <footer
+      className="fixed bottom-0 left-0 right-0 z-10 transition-all duration-300 ease-in-out bg-background border-t dark:border-slate-700 shadow-md"
+      style={{
+        height: isExpanded ? "120px" : "8px",
+        overflow: "hidden",
+      }}
+      onMouseEnter={() => setIsExpanded(true)}
+      onMouseLeave={() => setIsExpanded(false)}
+    >
+      {/* 푸터 핸들 - 항상 표시되는 부분 */}
+      <FooterHandle isExpanded={isExpanded} toggleExpanded={toggleExpanded} />
+
+      {/* 푸터 콘텐츠 - 펼쳐질 때만 표시 */}
+      <div className="container mx-auto px-4 py-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-col items-center md:items-start">
             <p className="text-sm text-muted-foreground">
