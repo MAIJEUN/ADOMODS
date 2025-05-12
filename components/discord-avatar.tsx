@@ -5,7 +5,7 @@ import Image from "next/image"
 
 interface DiscordAvatarProps {
   userId: string
-  avatarHash?: string
+  avatarHash?: string // 이제 이 값은 사용하지 않지만 호환성을 위해 유지
   username?: string
   size?: number
   className?: string
@@ -13,31 +13,21 @@ interface DiscordAvatarProps {
 
 export function DiscordAvatar({
   userId,
-  avatarHash,
+  avatarHash, // 사용하지 않음
   username = "User",
   size = 80,
   className = "",
 }: DiscordAvatarProps) {
-  const [customAvatarError, setCustomAvatarError] = useState(false)
+  const [error, setError] = useState(false)
 
-  // 사용자 ID에 기반한 기본 아바타 URL 생성
-  const getDefaultAvatarUrl = () => {
-    if (!userId) return "/default-avatar.png"
-
-    // 디스코드 기본 아바타 (사용자 ID 마지막 숫자에 따라 0-5 중 하나)
-    const discriminator = Number.parseInt(userId.slice(-1), 10) % 6
-    return `https://cdn.discordapp.com/embed/avatars/${discriminator}.png`
-  }
-
-  // 아바타 URL 결정
+  // 새로운 API URL 생성
   const getAvatarUrl = () => {
-    // 커스텀 아바타가 있고 오류가 없는 경우
-    if (avatarHash && !customAvatarError && userId) {
-      return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png?size=${size}`
+    if (!userId || error) {
+      return "/default-avatar.png"
     }
 
-    // 그 외의 경우 기본 아바타 사용
-    return getDefaultAvatarUrl()
+    // 제공된 API 사용
+    return `https://avatar-cyan.vercel.app/api/pfp/${userId}/image`
   }
 
   return (
@@ -48,10 +38,7 @@ export function DiscordAvatar({
         width={size}
         height={size}
         className="object-cover"
-        onError={() => {
-          // 커스텀 아바타 로딩 실패 시 기본 아바타로 대체
-          setCustomAvatarError(true)
-        }}
+        onError={() => setError(true)}
         unoptimized
       />
     </div>
