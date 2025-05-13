@@ -63,6 +63,7 @@ export const translations: Record<Language, TranslationData> = {
     "mod.notFound": "모드를 찾을 수 없습니다",
     "mod.uploadDate": "업로드 날짜",
     "mod.githubPage": "GitHub 페이지",
+    "mod.discordMessage": "디스코드 메시지로 이동",
     "mod.noDescription": "설명이 없습니다.",
 
     // 오류
@@ -129,6 +130,7 @@ export const translations: Record<Language, TranslationData> = {
     "mod.notFound": "Mod not found",
     "mod.uploadDate": "Upload Date",
     "mod.githubPage": "GitHub Page",
+    "mod.discordMessage": "Go to Discord Message",
     "mod.noDescription": "No description available.",
 
     // Error

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, Download, ExternalLink, Calendar, User, Loader2, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Download, ExternalLink, Calendar, User, Loader2, AlertTriangle, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { ko, enUS } from "date-fns/locale"
@@ -43,6 +43,10 @@ function SimpleMarkdown({ content }: { content: string }) {
     return <p className="text-muted-foreground">{content}</p>
   }
 }
+
+// ADOFAI 디스코드 서버 ID와 채널 ID
+const ADOFAI_GUILD_ID = "700188171203600384"
+const ADOFAI_MODS_CHANNEL_ID = "700188171203600387"
 
 export default function ModPage({ params }: { params: { id: string } }) {
   const { isLoading: isModsLoading, error: modsError, getMod } = useMods()
@@ -109,6 +113,14 @@ export default function ModPage({ params }: { params: { id: string } }) {
   const modUsername = mod.cachedUsername || t("mod.unknownUser")
   const modDescription = mod.description || t("mod.noDescription")
   const modDownload = mod.parsedDownload || mod.download || "#"
+
+  // 디스코드 메시지 ID 추출 (mod._id 또는 mod.id 사용)
+  const messageId = mod._id || mod.id || ""
+
+  // 디스코드 메시지 URL 생성
+  const discordMessageUrl = messageId
+    ? `https://discord.com/channels/${ADOFAI_GUILD_ID}/${ADOFAI_MODS_CHANNEL_ID}/${messageId}`
+    : null
 
   // Format upload time with correct locale
   const uploadTime = mod.uploadedTimestamp ? new Date(mod.uploadedTimestamp) : new Date()
@@ -177,6 +189,15 @@ export default function ModPage({ params }: { params: { id: string } }) {
                       <a href={mod.download} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-4 w-4 mr-2" />
                         {t("mod.githubPage")}
+                      </a>
+                    </Button>
+                  )}
+
+                  {discordMessageUrl && (
+                    <Button variant="outline" className="w-full" asChild>
+                      <a href={discordMessageUrl} target="_blank" rel="noopener noreferrer">
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        {t("mod.discordMessage")}
                       </a>
                     </Button>
                   )}
