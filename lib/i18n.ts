@@ -64,6 +64,8 @@ export const translations: Record<Language, TranslationData> = {
     "mod.uploadDate": "업로드 날짜",
     "mod.githubPage": "GitHub 페이지",
     "mod.discordMessage": "디스코드 메시지로 이동",
+    "mod.installGuide": "모드 설치 가이드",
+    "mod.discordServer": "ADOFAI.gg 디스코드 서버",
     "mod.noDescription": "설명이 없습니다.",
 
     // 오류
@@ -131,6 +133,8 @@ export const translations: Record<Language, TranslationData> = {
     "mod.uploadDate": "Upload Date",
     "mod.githubPage": "GitHub Page",
     "mod.discordMessage": "Go to Discord Message",
+    "mod.installGuide": "Mod Installation Guide",
+    "mod.discordServer": "ADOFAI.gg Discord Server",
     "mod.noDescription": "No description available.",
 
     // Error
