@@ -133,7 +133,7 @@ export const translations: Record<Language, TranslationData> = {
     "mod.uploadDate": "Upload Date",
     "mod.githubPage": "GitHub Page",
     "mod.discordMessage": "Go to Discord Message",
-    "mod.installGuide": "Mod Installation Guide",
+    "mod.installGuide": "Mod Installation Guide (Korean)",
     "mod.discordServer": "ADOFAI.gg Discord Server",
     "mod.noDescription": "No description available.",
 
