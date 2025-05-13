@@ -3,27 +3,12 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import {
-  ArrowLeft,
-  Download,
-  ExternalLink,
-  Calendar,
-  User,
-  Loader2,
-  AlertTriangle,
-  MessageSquare,
-  HelpCircle,
-  Users,
-} from "lucide-react"
+import { ArrowLeft, Download, ExternalLink, Calendar, User, Loader2, AlertTriangle, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { ko, enUS } from "date-fns/locale"
 import { useMods } from "@/components/mods-provider"
 import { useLanguage } from "@/components/language-provider"
-
-// 상수 정의
-const MOD_INSTALL_GUIDE_URL = "https://adof.ai/mod"
-const ADOFAI_DISCORD_URL = "https://discord.gg/adofaigg"
 
 // 간단한 마크다운 파서 (기본 기능만 지원)
 function SimpleMarkdown({ content }: { content: string }) {
@@ -201,14 +186,6 @@ export default function ModPage({ params }: { params: { id: string } }) {
                     </a>
                   </Button>
 
-                  {/* 모드 설치 가이드 버튼 */}
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href={MOD_INSTALL_GUIDE_URL} target="_blank" rel="noopener noreferrer">
-                      <HelpCircle className="h-4 w-4 mr-2" />
-                      {t("mod.installGuide")}
-                    </a>
-                  </Button>
-
                   {/* GitHub 페이지 버튼 */}
                   {mod.download && mod.download.includes("github.com") && (
                     <Button variant="outline" className="w-full" asChild>
@@ -228,14 +205,6 @@ export default function ModPage({ params }: { params: { id: string } }) {
                       </a>
                     </Button>
                   )}
-
-                  {/* 디스코드 서버 버튼 */}
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href={ADOFAI_DISCORD_URL} target="_blank" rel="noopener noreferrer">
-                      <Users className="h-4 w-4 mr-2" />
-                      {t("mod.discordServer")}
-                    </a>
-                  </Button>
                 </div>
               </div>
             </CardContent>
