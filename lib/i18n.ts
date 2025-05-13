@@ -23,6 +23,7 @@ export const translations: Record<Language, TranslationData> = {
     "header.lastUpdated": "마지막 업데이트",
     "header.offlineMode": "오프라인 모드",
     "header.unknown": "알 수 없음",
+    "header.moreMenu": "더 보기",
 
     // 테마
     "theme.light": "라이트 모드",
@@ -65,7 +66,7 @@ export const translations: Record<Language, TranslationData> = {
     "mod.githubPage": "GitHub 페이지",
     "mod.discordMessage": "디스코드 메시지로 이동",
     "mod.installGuide": "모드 설치 가이드",
-    "mod.discordServer": "ADOFAI.gg 디스코드 서버",
+    "mod.discordServer": "ADOFAI.gg 디스코드",
     "mod.noDescription": "설명이 없습니다.",
 
     // 오류
@@ -92,6 +93,7 @@ export const translations: Record<Language, TranslationData> = {
     "header.lastUpdated": "Last Updated",
     "header.offlineMode": "Offline Mode",
     "header.unknown": "Unknown",
+    "header.moreMenu": "More Options",
 
     // Theme
     "theme.light": "Light Mode",
@@ -133,8 +135,8 @@ export const translations: Record<Language, TranslationData> = {
     "mod.uploadDate": "Upload Date",
     "mod.githubPage": "GitHub Page",
     "mod.discordMessage": "Go to Discord Message",
-    "mod.installGuide": "Mod Installation Guide (Korean)",
-    "mod.discordServer": "ADOFAI.gg Discord Server",
+    "mod.installGuide": "Mod Installation Guide",
+    "mod.discordServer": "ADOFAI.gg Discord",
     "mod.noDescription": "No description available.",
 
     // Error

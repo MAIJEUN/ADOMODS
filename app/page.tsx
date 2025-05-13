@@ -7,6 +7,7 @@ import { Loader2, HelpCircle, Users } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/components/language-provider"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 // 상수 정의
 const MOD_INSTALL_GUIDE_URL = "https://adof.ai/mod"
@@ -18,6 +19,7 @@ export default function Home() {
   const query = searchParams.get("q") || ""
   const sort = searchParams.get("sort") || "uploadedTimestamp"
   const { t } = useLanguage()
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -26,21 +28,23 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
           <SearchBar initialQuery={query} initialSort={sort} />
 
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <a href={MOD_INSTALL_GUIDE_URL} target="_blank" rel="noopener noreferrer">
-                <HelpCircle className="h-4 w-4 mr-1" />
-                {t("mod.installGuide")}
-              </a>
-            </Button>
+          {!isMobile && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <a href={MOD_INSTALL_GUIDE_URL} target="_blank" rel="noopener noreferrer">
+                  <HelpCircle className="h-4 w-4 mr-1" />
+                  {t("mod.installGuide")}
+                </a>
+              </Button>
 
-            <Button variant="outline" size="sm" asChild>
-              <a href={ADOFAI_DISCORD_URL} target="_blank" rel="noopener noreferrer">
-                <Users className="h-4 w-4 mr-1" />
-                {t("mod.discordServer")}
-              </a>
-            </Button>
-          </div>
+              <Button variant="outline" size="sm" asChild>
+                <a href={ADOFAI_DISCORD_URL} target="_blank" rel="noopener noreferrer">
+                  <Users className="h-4 w-4 mr-1" />
+                  {t("mod.discordServer")}
+                </a>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
       <Suspense

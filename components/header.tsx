@@ -4,11 +4,13 @@ import { useMods } from "@/components/mods-provider"
 import { DataRefreshButton } from "@/components/data-refresh-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
+import { MoreMenu } from "@/components/more-menu"
 import { useLanguage } from "@/components/language-provider"
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useTheme } from "@/components/theme-provider"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 export function Header() {
   const { lastUpdated, error } = useMods()
@@ -16,6 +18,7 @@ export function Header() {
   const { theme } = useTheme()
   const { t } = useLanguage()
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
   // 실제 적용되는 테마 감지
   useEffect(() => {
@@ -90,8 +93,14 @@ export function Header() {
             <span className="text-xl font-bold tracking-tight">{t("app.title")}</span>
           </Link>
           <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <ThemeToggle />
+            {isMobile ? (
+              <MoreMenu />
+            ) : (
+              <>
+                <LanguageToggle />
+                <ThemeToggle />
+              </>
+            )}
           </div>
         </div>
 
