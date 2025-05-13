@@ -61,6 +61,7 @@ export const translations: Record<Language, TranslationData> = {
 
     // 모드 상세
     "mod.backToList": "모든 모드 보기",
+    "mod.goBack": "이전으로",
     "mod.notFound": "모드를 찾을 수 없습니다",
     "mod.uploadDate": "업로드 날짜",
     "mod.githubPage": "GitHub 페이지",
@@ -131,6 +132,7 @@ export const translations: Record<Language, TranslationData> = {
 
     // Mod Detail
     "mod.backToList": "Back to all mods",
+    "mod.goBack": "Go Back",
     "mod.notFound": "Mod not found",
     "mod.uploadDate": "Upload Date",
     "mod.githubPage": "GitHub Page",

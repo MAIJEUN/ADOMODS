@@ -4,11 +4,11 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, Download, ExternalLink, Calendar, User, Loader2, AlertTriangle, MessageSquare } from "lucide-react"
-import Link from "next/link"
 import { format } from "date-fns"
 import { ko, enUS } from "date-fns/locale"
 import { useMods } from "@/components/mods-provider"
 import { useLanguage } from "@/components/language-provider"
+import { useRouter } from "next/navigation"
 
 // 간단한 마크다운 파서 (기본 기능만 지원)
 function SimpleMarkdown({ content }: { content: string }) {
@@ -50,6 +50,7 @@ export default function ModPage({ params }: { params: { id: string } }) {
   const [mod, setMod] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   // ID로 모드 가져오기
   useEffect(() => {
@@ -77,6 +78,12 @@ export default function ModPage({ params }: { params: { id: string } }) {
     loadMod()
   }, [params.id, getMod, t])
 
+  // 이전 페이지로 돌아가기 함수
+  const handleGoBack = () => {
+    // 브라우저의 히스토리를 사용하여 이전 페이지로 이동
+    window.history.back()
+  }
+
   // 로딩 중일 때
   if (isLoading || isModsLoading) {
     return (
@@ -93,11 +100,9 @@ export default function ModPage({ params }: { params: { id: string } }) {
       <div className="container mx-auto px-4 py-12 text-center">
         <h1 className="text-2xl font-bold mb-4">{t("mod.notFound")}</h1>
         <p className="mb-6">{error || t("mod.notFound")}</p>
-        <Button asChild>
-          <Link href="/">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t("error.backToHome")}
-          </Link>
+        <Button onClick={handleGoBack}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t("mod.goBack")}
         </Button>
       </div>
     )
@@ -131,10 +136,14 @@ export default function ModPage({ params }: { params: { id: string } }) {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <Link href="/" className="inline-flex items-center text-primary hover:underline mb-6">
+      <Button
+        onClick={handleGoBack}
+        className="inline-flex items-center text-primary hover:underline mb-6"
+        variant="ghost"
+      >
         <ArrowLeft className="h-4 w-4 mr-1" />
-        {t("mod.backToList")}
-      </Link>
+        {t("mod.goBack")}
+      </Button>
 
       {(modsError || error) && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-6 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-800 dark:text-yellow-400">
