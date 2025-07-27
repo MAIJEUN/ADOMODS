@@ -17,7 +17,7 @@ export function Footer() {
     <footer
       className="fixed bottom-0 left-0 right-0 z-10 transition-all duration-300 ease-in-out bg-background border-t dark:border-slate-700 shadow-md"
       style={{
-        height: isExpanded ? "120px" : "8px",
+        height: isExpanded ? "160px" : "8px",
         overflow: "hidden",
       }}
       onMouseEnter={() => setIsExpanded(true)}
@@ -44,6 +44,8 @@ export function Footer() {
                 GNU General Public License v3.0
               </Link>
             </p>
+            <p className="text-sm text-muted-foreground text-center md:text-left">{t("footer.gameDisclaimer")}</p>
+            <p className="text-sm text-muted-foreground text-center md:text-left">{t("footer.siteDisclaimer")}</p>
           </div>
 
           <div className="flex items-center gap-4">
