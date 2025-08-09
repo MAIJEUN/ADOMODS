@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { getModsFromStorage, saveModsToStorage, shouldFetchNewData } from "@/lib/storage"
-import { mockMods } from "@/lib/mock-data"
 
 // 컨텍스트 타입 정의
 interface ModsContextType {
@@ -161,19 +160,18 @@ export function ModsProvider({ children }: { children: ReactNode }) {
           setRetryCount(0) // 성공 시 재시도 카운트 초기화
           console.log("Data successfully fetched and saved")
         } catch (apiError: any) {
-          console.error("API fetch failed, using mock or stored data:", apiError)
+          console.error("API fetch failed:", apiError)
 
-          // API 요청 실패 시 저장된 데이터 또는 모의 데이터 사용
+          // API 요청 실패 시 저장된 데이터 사용 또는 빈 배열
           if (storedMods && storedMods.length > 0) {
             // 저장된 데이터 검증
             const validatedStoredMods = validateModData(storedMods)
             setMods(validatedStoredMods)
             setError(`API 요청 실패: 저장된 데이터를 사용합니다. (${apiError.message})`)
           } else {
-            // 모의 데이터 검증
-            const validatedMockMods = validateModData(mockMods)
-            setMods(validatedMockMods)
-            setError(`API 요청 실패: 모의 데이터를 사용합니다. (${apiError.message})`)
+            // 저장된 데이터도 없으면 빈 배열
+            setMods([])
+            setError(`API 요청 실패: 데이터를 불러올 수 없습니다. (${apiError.message})`)
           }
         }
       } else {
@@ -188,9 +186,8 @@ export function ModsProvider({ children }: { children: ReactNode }) {
     } catch (e: any) {
       console.error("Error in fetchMods:", e)
       setError(`데이터를 불러오는 중 오류가 발생했습니다: ${e.message}`)
-      // 모의 데이터 검증
-      const validatedMockMods = validateModData(mockMods)
-      setMods(validatedMockMods)
+      // 오류 발생 시 빈 배열
+      setMods([])
     } finally {
       setIsLoading(false)
     }
@@ -209,13 +206,6 @@ export function ModsProvider({ children }: { children: ReactNode }) {
       return await fetchModById(id)
     } catch (error) {
       console.error(`Error getting mod with ID ${id}:`, error)
-
-      // 모의 데이터에서 찾기
-      const mockMod = mockMods.find((mod) => mod.id === id)
-      if (mockMod) {
-        return mockMod
-      }
-
       throw error
     }
   }

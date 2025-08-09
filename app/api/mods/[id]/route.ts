@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { mockMods } from "@/lib/mock-data"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const id = params.id
@@ -21,9 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         // 빈 응답 체크
         if (!text || text.trim() === "") {
           console.error("API returned empty response for specific mod")
-          // 모의 데이터에서 찾기
-          const mockMod = mockMods.find((mod) => mod.id === id)
-          return mockMod ? NextResponse.json(mockMod) : NextResponse.json({ error: "Mod not found" }, { status: 404 })
+          return NextResponse.json({ error: "Mod not found" }, { status: 404 })
         }
 
         // 텍스트를 JSON으로 파싱
@@ -31,24 +28,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         return NextResponse.json(data)
       } catch (parseError) {
         console.error("Failed to parse JSON for specific mod:", parseError)
-        // 모의 데이터에서 찾기
-        const mockMod = mockMods.find((mod) => mod.id === id)
-        return mockMod
-          ? NextResponse.json(mockMod)
-          : NextResponse.json({ error: "Failed to parse mod data" }, { status: 500 })
+        return NextResponse.json({ error: "Failed to parse mod data" }, { status: 500 })
       }
     } else {
       console.error(`API responded with status: ${res.status}`)
-      // 모의 데이터에서 찾기
-      const mockMod = mockMods.find((mod) => mod.id === id)
-      return mockMod ? NextResponse.json(mockMod) : NextResponse.json({ error: "Mod not found" }, { status: 404 })
+      return NextResponse.json({ error: "Mod not found" }, { status: 404 })
     }
   } catch (error) {
     console.error("Error fetching mod data:", error)
-    // 모의 데이터에서 찾기
-    const mockMod = mockMods.find((mod) => mod.id === id)
-    return mockMod
-      ? NextResponse.json(mockMod)
-      : NextResponse.json({ error: "Failed to fetch mod data" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch mod data" }, { status: 500 })
   }
 }

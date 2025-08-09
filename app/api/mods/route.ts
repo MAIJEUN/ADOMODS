@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { mockMods } from "@/lib/mock-data"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -60,18 +59,13 @@ export async function GET(request: NextRequest) {
         }
       } catch (parseError) {
         console.error("Error parsing API response:", parseError)
-        // 파싱 실패 시 모의 데이터 사용
-        mods = [...mockMods]
+        // 파싱 실패 시 빈 배열 반환
+        mods = []
       }
     } else {
       console.error("API request failed after retries:", error)
-      // API 요청 실패 시 모의 데이터 사용
-      mods = [...mockMods]
-    }
-
-    // 데이터가 없으면 모의 데이터 사용
-    if (mods.length === 0) {
-      mods = [...mockMods]
+      // API 요청 실패 시 빈 배열 반환
+      mods = []
     }
 
     // 버전 정보가 있는 모드만 필터링
@@ -103,40 +97,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(mods)
   } catch (error) {
     console.error("Error in API route:", error)
-    // 오류 발생 시 모의 데이터 반환
-    let mods = [...mockMods]
-
-    // 데이터가 없으면 모의 데이터 사용
-    if (mods.length === 0) {
-      mods = [...mockMods]
-    }
-
-    // 버전 정보가 있는 모드만 필터링
-    mods = mods.filter((mod: any) => mod.version && mod.version.trim() !== "")
-
-    // 검색어로 필터링
-    if (query) {
-      mods = mods.filter(
-        (mod: any) =>
-          (mod.name?.toLowerCase() || "").includes(query) ||
-          (mod.description?.toLowerCase() || "").includes(query) ||
-          (mod.cachedUsername?.toLowerCase() || "").includes(query),
-      )
-    }
-
-    // 정렬
-    mods.sort((a: any, b: any) => {
-      switch (sort) {
-        case "name":
-          return (a.name || "").localeCompare(b.name || "")
-        case "version":
-          return (b.version || "").localeCompare(a.version || "")
-        case "uploadedTimestamp":
-        default:
-          return (b.uploadedTimestamp || 0) - (a.uploadedTimestamp || 0)
-      }
-    })
-
-    return NextResponse.json(mods)
+    // 오류 발생 시 빈 배열 반환
+    return NextResponse.json([])
   }
 }
