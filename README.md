@@ -1,7 +1,9 @@
 # ADOMODS
 
-<div align="center">
+> [!NOTE]
+> 해당 사이트는 100% 바이브 코딩으로 만들어진 사이트 입니다..
 
+<div align="center">
 
 **A Dance of Fire and Ice 모드 브라우저**
 
