@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import useSWR from "swr"
 import ReactMarkdown from "react-markdown"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,12 +11,26 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Download, ExternalLink, Loader2, Info, User, Calendar, Hash } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Search,
+  Download,
+  ExternalLink,
+  Loader2,
+  Info,
+  User,
+  Calendar,
+  Hash,
+  Filter,
+  X,
+  MessageSquare,
+} from "lucide-react"
 
 interface Mod {
   _id?: string
@@ -41,6 +55,11 @@ interface Mod {
 }
 
 type SortType = "newest" | "oldest" | "name-asc" | "name-desc"
+
+interface FilterState {
+  developer?: string
+  hasDownload?: boolean
+}
 
 const fetcher = async (url: string) => {
   const res = await fetch(url)
@@ -78,21 +97,6 @@ const generateModMarkdown = (mod: Mod) => {
     sections.push(`- **업로드 날짜:** ${formatDate(mod.uploadedTimestamp)}`)
   }
 
-  sections.push(`\n## 기술 정보`)
-  sections.push(`- **모드 ID:** \`${mod.id}\``)
-  if (mod.user) {
-    sections.push(`- **사용자 ID:** \`${mod.user}\``)
-  }
-  if (mod.guild) {
-    sections.push(`- **길드 ID:** \`${mod.guild}\``)
-  }
-  if (mod.channel) {
-    sections.push(`- **채널 ID:** \`${mod.channel}\``)
-  }
-  if (mod.message) {
-    sections.push(`- **메시지 ID:** \`${mod.message}\``)
-  }
-
   if (mod.download) {
     sections.push(`\n## 다운로드\n[다운로드 링크](${mod.download})`)
   }
@@ -100,9 +104,17 @@ const generateModMarkdown = (mod: Mod) => {
   return sections.join("\n")
 }
 
+const getDiscordMessageUrl = (mod: Mod) => {
+  if (mod.guild && mod.channel && mod.message) {
+    return `https://discord.com/channels/${mod.guild}/${mod.channel}/${mod.message}`
+  }
+  return null
+}
+
 export default function ModsList() {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState<SortType>("newest")
+  const [filters, setFilters] = useState<FilterState>({})
 
   const { data, error, isLoading } = useSWR("/api/mods", fetcher, {
     revalidateOnFocus: false,
@@ -110,8 +122,26 @@ export default function ModsList() {
 
   const modsArray = Array.isArray(data) ? data : data?.mods || data?.data || []
 
+  const uniqueDevelopers = useMemo(() => {
+    const developers = modsArray
+      .filter((mod: Mod) => mod.version && mod.cachedUsername)
+      .map((mod: Mod) => mod.cachedUsername)
+      .filter((v: string, i: number, a: string[]) => a.indexOf(v) === i)
+      .sort()
+    return developers
+  }, [modsArray])
+
   const filteredAndSortedMods = modsArray
     .filter((mod: Mod) => mod.version) // Only show mods with version
+    .filter((mod: Mod) => {
+      if (filters.developer && mod.cachedUsername !== filters.developer) {
+        return false
+      }
+      if (filters.hasDownload && !mod.download) {
+        return false
+      }
+      return true
+    })
     .filter((mod: Mod) => {
       const query = searchQuery.toLowerCase()
       return (
@@ -136,6 +166,8 @@ export default function ModsList() {
       }
     })
 
+  const activeFilterCount = Object.values(filters).filter((v) => v !== undefined).length
+
   return (
     <div className="space-y-6">
       {/* Search Bar and Sort Controls */}
@@ -151,7 +183,79 @@ export default function ModsList() {
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2 bg-transparent">
+                <Filter className="h-4 w-4" />
+                필터
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center rounded-full">
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80" align="end">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">필터</h4>
+                  {activeFilterCount > 0 && (
+                    <Button variant="ghost" size="sm" onClick={() => setFilters({})}>
+                      모두 지우기
+                    </Button>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">개발자</label>
+                  <Select
+                    value={filters.developer || "all"}
+                    onValueChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        developer: value === "all" ? undefined : value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="모든 개발자" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="all">모든 개발자</SelectItem>
+                      {uniqueDevelopers.map((dev: string) => (
+                        <SelectItem key={dev} value={dev}>
+                          {dev}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">다운로드 가능 여부</label>
+                  <Select
+                    value={filters.hasDownload ? "yes" : "all"}
+                    onValueChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        hasDownload: value === "yes" ? true : undefined,
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">모두 표시</SelectItem>
+                      <SelectItem value="yes">다운로드 가능한 모드만</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
           <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortType)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="정렬 기준" />
@@ -169,6 +273,35 @@ export default function ModsList() {
           </Badge>
         </div>
       </div>
+
+      {/* Active Filters Display */}
+      {activeFilterCount > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-muted-foreground">활성 필터:</span>
+          {filters.developer && (
+            <Badge variant="secondary" className="gap-1">
+              개발자: {filters.developer}
+              <button
+                onClick={() => setFilters((prev) => ({ ...prev, developer: undefined }))}
+                className="ml-1 hover:bg-muted rounded-full"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+          {filters.hasDownload && (
+            <Badge variant="secondary" className="gap-1">
+              다운로드 가능
+              <button
+                onClick={() => setFilters((prev) => ({ ...prev, hasDownload: undefined }))}
+                className="ml-1 hover:bg-muted rounded-full"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+        </div>
+      )}
 
       {/* Loading State */}
       {isLoading && (
@@ -229,7 +362,22 @@ export default function ModsList() {
                         </Badge>
                       )}
                     </div>
-                    {mod.description && <CardDescription className="line-clamp-2">{mod.description}</CardDescription>}
+                    {mod.description && (
+                      <CardDescription className="line-clamp-2">
+                        <ReactMarkdown
+                          components={{
+                            p: ({ node, ...props }) => <span {...props} />,
+                            strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
+                            em: ({ node, ...props }) => <em {...props} />,
+                            code: ({ node, ...props }) => (
+                              <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props} />
+                            ),
+                          }}
+                        >
+                          {mod.description}
+                        </ReactMarkdown>
+                      </CardDescription>
+                    )}
                   </CardHeader>
 
                   <CardContent className="space-y-4 flex-1 flex flex-col">
@@ -306,7 +454,16 @@ export default function ModsList() {
                             </div>
                           </div>
 
-                          <div className="flex-shrink-0 flex justify-end gap-2 pt-4 border-t">
+                          <DialogFooter className="flex-shrink-0 flex justify-end gap-2 pt-4 border-t">
+                            {getDiscordMessageUrl(mod) && (
+                              <Button variant="outline" asChild>
+                                <a href={getDiscordMessageUrl(mod)!} target="_blank" rel="noopener noreferrer">
+                                  <MessageSquare className="mr-2 h-4 w-4" />
+                                  디스코드 메시지로 이동
+                                  <ExternalLink className="ml-2 h-3 w-3" />
+                                </a>
+                              </Button>
+                            )}
                             {mod.download && (
                               <Button asChild>
                                 <a href={mod.download} target="_blank" rel="noopener noreferrer">
@@ -316,7 +473,7 @@ export default function ModsList() {
                                 </a>
                               </Button>
                             )}
-                          </div>
+                          </DialogFooter>
                         </DialogContent>
                       </Dialog>
                     </div>
