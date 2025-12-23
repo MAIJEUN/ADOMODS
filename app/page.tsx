@@ -1,44 +1,62 @@
-import ModsList from "@/components/mods-list"
-import Image from "next/image"
+"use client"
+
+import { Suspense } from "react"
+import ModsGrid from "@/components/mods-grid"
+import SearchBar from "@/components/search-bar"
+import { Loader2, HelpCircle, Users } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { useLanguage } from "@/components/language-provider"
+import { useMediaQuery } from "@/hooks/use-media-query"
+
+// 상수 정의
+const MOD_INSTALL_GUIDE_URL = "https://adof.ai/mod"
+const ADOFAI_DISCORD_URL = "https://discord.gg/adofaigg"
 
 export default function Home() {
+  // URL 쿼리 파라미터 추출
+  const searchParams = useSearchParams()
+  const query = searchParams.get("q") || ""
+  const sort = searchParams.get("sort") || "uploadedTimestamp"
+  const { t } = useLanguage()
+  const isMobile = useMediaQuery("(max-width: 768px)")
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Image src="/logo.png" alt="ADOMODS Logo" width={60} height={60} className="object-contain" />
-              <div>
-                <h1 className="text-3xl font-bold text-balance">
-                  <span className="text-primary">ADO</span>MODS
-                </h1>
-                <p className="text-sm text-muted-foreground mt-1">A Dance of Fire and Ice Mods</p>
-              </div>
+    <main className="container mx-auto px-4 py-8">
+      {/* 제목 제거 (헤더에 로고와 사이트명이 있으므로) */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+          <SearchBar initialQuery={query} initialSort={sort} />
+
+          {!isMobile && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <a href={MOD_INSTALL_GUIDE_URL} target="_blank" rel="noopener noreferrer">
+                  <HelpCircle className="h-4 w-4 mr-1" />
+                  {t("mod.installGuide")}
+                </a>
+              </Button>
+
+              <Button variant="outline" size="sm" asChild>
+                <a href={ADOFAI_DISCORD_URL} target="_blank" rel="noopener noreferrer">
+                  <Users className="h-4 w-4 mr-1" />
+                  {t("mod.discordServer")}
+                </a>
+              </Button>
             </div>
+          )}
+        </div>
+      </div>
+      <Suspense
+        fallback={
+          <div className="flex justify-center items-center min-h-[50vh]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2">{t("mods.loading")}</span>
           </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
-        <ModsList />
-      </main>
-
-      <footer className="border-t border-border mt-16">
-        <div className="container mx-auto px-4 py-6">
-          <p className="text-center text-sm text-muted-foreground">
-            Data from{" "}
-            <a
-              href="https://bot.adofai.gg/api/mods/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              bot.adofai.gg
-            </a>
-          </p>
-        </div>
-      </footer>
-    </div>
+        }
+      >
+        <ModsGrid query={query} sort={sort} />
+      </Suspense>
+    </main>
   )
 }
