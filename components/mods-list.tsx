@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -57,7 +58,7 @@ interface Mod {
 type SortType = "newest" | "oldest" | "name-asc" | "name-desc"
 
 interface FilterState {
-  developer?: string
+  developers?: string[]
   hasDownload?: boolean
 }
 
@@ -115,6 +116,7 @@ export default function ModsList() {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState<SortType>("newest")
   const [filters, setFilters] = useState<FilterState>({})
+  const [developerSearch, setDeveloperSearch] = useState("")
 
   const { data, error, isLoading } = useSWR("/api/mods", fetcher, {
     revalidateOnFocus: false,
@@ -131,11 +133,19 @@ export default function ModsList() {
     return developers
   }, [modsArray])
 
+  const filteredDevelopers = useMemo(() => {
+    if (!developerSearch) return uniqueDevelopers
+    const query = developerSearch.toLowerCase()
+    return uniqueDevelopers.filter((dev: string) => dev.toLowerCase().includes(query))
+  }, [uniqueDevelopers, developerSearch])
+
   const filteredAndSortedMods = modsArray
-    .filter((mod: Mod) => mod.version) // Only show mods with version
+    .filter((mod: Mod) => mod.version)
     .filter((mod: Mod) => {
-      if (filters.developer && mod.cachedUsername !== filters.developer) {
-        return false
+      if (filters.developers && filters.developers.length > 0) {
+        if (!filters.developers.includes(mod.cachedUsername || "")) {
+          return false
+        }
       }
       if (filters.hasDownload && !mod.download) {
         return false
@@ -166,7 +176,21 @@ export default function ModsList() {
       }
     })
 
-  const activeFilterCount = Object.values(filters).filter((v) => v !== undefined).length
+  const activeFilterCount = Object.values(filters).filter(
+    (v) => v !== undefined && (Array.isArray(v) ? v.length > 0 : true),
+  ).length
+
+  const toggleDeveloper = (developer: string) => {
+    setFilters((prev) => {
+      const current = prev.developers || []
+      if (current.includes(developer)) {
+        const updated = current.filter((d) => d !== developer)
+        return { ...prev, developers: updated.length > 0 ? updated : undefined }
+      } else {
+        return { ...prev, developers: [...current, developer] }
+      }
+    })
+  }
 
   return (
     <div className="space-y-6">
@@ -208,28 +232,37 @@ export default function ModsList() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">개발자</label>
-                  <Select
-                    value={filters.developer || "all"}
-                    onValueChange={(value) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        developer: value === "all" ? undefined : value,
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="모든 개발자" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      <SelectItem value="all">모든 개발자</SelectItem>
-                      {uniqueDevelopers.map((dev: string) => (
-                        <SelectItem key={dev} value={dev}>
-                          {dev}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <label className="text-sm font-medium">
+                    개발자 {filters.developers && filters.developers.length > 0 && `(${filters.developers.length})`}
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="개발자 검색..."
+                    value={developerSearch}
+                    onChange={(e) => setDeveloperSearch(e.target.value)}
+                    className="mb-2"
+                  />
+                  <div className="max-h-[200px] overflow-y-auto space-y-2 border rounded-md p-2">
+                    {filteredDevelopers.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-2">검색 결과가 없습니다</p>
+                    ) : (
+                      filteredDevelopers.map((dev: string) => (
+                        <div key={dev} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`dev-${dev}`}
+                            checked={filters.developers?.includes(dev) || false}
+                            onCheckedChange={() => toggleDeveloper(dev)}
+                          />
+                          <label
+                            htmlFor={`dev-${dev}`}
+                            className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                          >
+                            {dev}
+                          </label>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -278,11 +311,11 @@ export default function ModsList() {
       {activeFilterCount > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm text-muted-foreground">활성 필터:</span>
-          {filters.developer && (
+          {filters.developers && filters.developers.length > 0 && (
             <Badge variant="secondary" className="gap-1">
-              개발자: {filters.developer}
+              개발자: {filters.developers.join(", ")}
               <button
-                onClick={() => setFilters((prev) => ({ ...prev, developer: undefined }))}
+                onClick={() => setFilters((prev) => ({ ...prev, developers: undefined }))}
                 className="ml-1 hover:bg-muted rounded-full"
               >
                 <X className="h-3 w-3" />
@@ -419,7 +452,7 @@ export default function ModsList() {
                             자세히
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+                        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
                           <DialogHeader className="flex-shrink-0">
                             <DialogTitle className="text-2xl">{mod.name}</DialogTitle>
                             <DialogDescription>모드 상세 정보</DialogDescription>
@@ -436,6 +469,9 @@ export default function ModsList() {
                                   p: ({ node, ...props }) => <p className="mb-2 break-words" {...props} />,
                                   ul: ({ node, ...props }) => (
                                     <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />
+                                  ),
+                                  ol: ({ node, ...props }) => (
+                                    <ol className="list-decimal pl-5 mb-2 space-y-1" {...props} />
                                   ),
                                   li: ({ node, ...props }) => <li className="break-words" {...props} />,
                                   code: ({ node, inline, ...props }) =>
