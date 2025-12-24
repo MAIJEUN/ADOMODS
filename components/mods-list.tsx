@@ -124,7 +124,10 @@ const proxyImage = (url?: string) => {
   const cleanUrl = url.replace(/[&?]+$/, "")
   // Use our proxy API for Discord CDN images
   if (cleanUrl.includes("cdn.discord.com") || cleanUrl.includes("media.discordapp.net")) {
-    return `/api/proxy-image?url=${encodeURIComponent(cleanUrl)}`
+    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(cleanUrl)}`
+    console.log("[v0] Using proxy for:", cleanUrl)
+    console.log("[v0] Proxy URL:", proxyUrl)
+    return proxyUrl
   }
   return cleanUrl
 }
@@ -524,7 +527,19 @@ export default function ModsList() {
                                       {...props}
                                       alt={props.alt || "이미지"}
                                       src={proxyImage(props.src) || "/placeholder.svg"}
-                                      className="max-w-full h-auto rounded-lg border border-border my-4"
+                                      className="max-w-full h-auto rounded-lg border border-border shadow-sm"
+                                      onError={(e) => {
+                                        console.log("[v0] Image failed to load:", mod.imageURL)
+                                        const target = e.currentTarget as HTMLImageElement
+                                        target.style.display = "none"
+                                        const parent = target.parentElement
+                                        if (parent) {
+                                          const errorMsg = document.createElement("p")
+                                          errorMsg.className = "text-sm text-muted-foreground"
+                                          errorMsg.textContent = "이미지를 불러올 수 없습니다."
+                                          parent.appendChild(errorMsg)
+                                        }
+                                      }}
                                     />
                                   ),
                                 }}
