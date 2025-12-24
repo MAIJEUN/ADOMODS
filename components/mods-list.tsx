@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import useSWR from "swr"
 import ReactMarkdown from "react-markdown"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -52,6 +52,7 @@ interface Mod {
   channel?: string
   message?: string
   cachedAvatar?: string
+  imageURL?: string
   [key: string]: any
 }
 
@@ -114,9 +115,18 @@ const getDiscordMessageUrl = (mod: Mod) => {
 
 export default function ModsList() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState<SortType>("newest")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [sortBy, setSortBy] = useState("newest")
+  const [selectedMod, setSelectedMod] = useState<Mod | null>(null)
   const [filters, setFilters] = useState<FilterState>({})
   const [developerSearch, setDeveloperSearch] = useState("")
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   const { data, error, isLoading } = useSWR("/api/mods", fetcher, {
     revalidateOnFocus: false,
@@ -139,42 +149,44 @@ export default function ModsList() {
     return uniqueDevelopers.filter((dev: string) => dev.toLowerCase().includes(query))
   }, [uniqueDevelopers, developerSearch])
 
-  const filteredAndSortedMods = modsArray
-    .filter((mod: Mod) => mod.version)
-    .filter((mod: Mod) => {
-      if (filters.developers && filters.developers.length > 0) {
-        if (!filters.developers.includes(mod.cachedUsername || "")) {
+  const filteredAndSortedMods = useMemo(() => {
+    return modsArray
+      .filter((mod: Mod) => mod.version)
+      .filter((mod: Mod) => {
+        if (filters.developers && filters.developers.length > 0) {
+          if (!filters.developers.includes(mod.cachedUsername || "")) {
+            return false
+          }
+        }
+        if (filters.hasDownload && !mod.download) {
           return false
         }
-      }
-      if (filters.hasDownload && !mod.download) {
-        return false
-      }
-      return true
-    })
-    .filter((mod: Mod) => {
-      const query = searchQuery.toLowerCase()
-      return (
-        mod.name?.toLowerCase().includes(query) ||
-        mod.description?.toLowerCase().includes(query) ||
-        mod.author?.toLowerCase().includes(query) ||
-        mod.cachedUsername?.toLowerCase().includes(query)
-      )
-    })
-    .sort((a: Mod, b: Mod) => {
-      switch (sortBy) {
-        case "newest":
-          return (b.uploadedTimestamp || 0) - (a.uploadedTimestamp || 0)
-        case "oldest":
-          return (a.uploadedTimestamp || 0) - (b.uploadedTimestamp || 0)
-        case "name-asc":
-          return (a.name || "").localeCompare(b.name || "")
-        case "name-desc":
-          return (b.name || "").localeCompare(a.name || "")
-        default:
-          return 0
-      }
-    })
+        return true
+      })
+      .filter((mod: Mod) => {
+        const query = debouncedSearch.toLowerCase()
+        return (
+          mod.name?.toLowerCase().includes(query) ||
+          mod.description?.toLowerCase().includes(query) ||
+          mod.author?.toLowerCase().includes(query) ||
+          mod.cachedUsername?.toLowerCase().includes(query)
+        )
+      })
+      .sort((a: Mod, b: Mod) => {
+        switch (sortBy) {
+          case "newest":
+            return (b.uploadedTimestamp || 0) - (a.uploadedTimestamp || 0)
+          case "oldest":
+            return (a.uploadedTimestamp || 0) - (b.uploadedTimestamp || 0)
+          case "name-asc":
+            return (a.name || "").localeCompare(b.name || "")
+          case "name-desc":
+            return (b.name || "").localeCompare(a.name || "")
+          default:
+            return 0
+        }
+      })
+  }, [modsArray, filters, debouncedSearch, sortBy])
 
   const activeFilterCount = Object.values(filters).filter(
     (v) => v !== undefined && (Array.isArray(v) ? v.length > 0 : true),
@@ -405,6 +417,13 @@ export default function ModsList() {
                             code: ({ node, ...props }) => (
                               <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props} />
                             ),
+                            img: ({ node, ...props }) => (
+                              <img
+                                className="max-w-full h-auto rounded-lg my-4 border border-border"
+                                {...props}
+                                alt={props.alt || "이미지"}
+                              />
+                            ),
                           }}
                         >
                           {mod.description}
@@ -452,7 +471,7 @@ export default function ModsList() {
                             자세히
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+                        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] flex flex-col">
                           <DialogHeader className="flex-shrink-0">
                             <DialogTitle className="text-2xl">{mod.name}</DialogTitle>
                             <DialogDescription>모드 상세 정보</DialogDescription>
@@ -471,7 +490,7 @@ export default function ModsList() {
                                     <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />
                                   ),
                                   ol: ({ node, ...props }) => (
-                                    <ol className="list-decimal pl-5 mb-2 space-y-1" {...props} />
+                                    <ol className="list-decimal pl-6 mb-2 space-y-1" {...props} />
                                   ),
                                   li: ({ node, ...props }) => <li className="break-words" {...props} />,
                                   code: ({ node, inline, ...props }) =>
@@ -483,10 +502,28 @@ export default function ModsList() {
                                   a: ({ node, ...props }) => (
                                     <a className="text-primary hover:underline break-all" {...props} />
                                   ),
+                                  img: ({ node, ...props }) => (
+                                    <img
+                                      src={mod.imageURL || "/placeholder.svg"}
+                                      alt={`${mod.name} 참고 이미지`}
+                                      className="max-w-full h-auto rounded-lg border border-border"
+                                    />
+                                  ),
                                 }}
                               >
                                 {generateModMarkdown(mod)}
                               </ReactMarkdown>
+
+                              {mod.imageURL && (
+                                <div className="mt-6">
+                                  <h3 className="text-lg font-semibold mb-2">참고 이미지</h3>
+                                  <img
+                                    src={mod.imageURL || "/placeholder.svg"}
+                                    alt={`${mod.name} 참고 이미지`}
+                                    className="max-w-full h-auto rounded-lg border border-border"
+                                  />
+                                </div>
+                              )}
                             </div>
                           </div>
 

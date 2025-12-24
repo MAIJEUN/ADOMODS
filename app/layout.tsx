@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: "얼불춤 모드 리스트를 시각적으로 편리하게 확인하세요",
   generator: "v0.app",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/new-favicon.ico", // Updated favicon path
   },
 }
 
