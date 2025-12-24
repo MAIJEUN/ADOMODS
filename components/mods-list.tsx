@@ -119,6 +119,16 @@ const cleanImageUrl = (url?: string) => {
   return url.replace(/[&?]+$/, "")
 }
 
+const proxyImage = (url?: string) => {
+  if (!url) return "/placeholder.svg"
+  const cleanUrl = url.replace(/[&?]+$/, "")
+  // Use our proxy API for Discord CDN images
+  if (cleanUrl.includes("cdn.discord.com") || cleanUrl.includes("media.discordapp.net")) {
+    return `/api/proxy-image?url=${encodeURIComponent(cleanUrl)}`
+  }
+  return cleanUrl
+}
+
 export default function ModsList() {
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
@@ -397,7 +407,7 @@ export default function ModsList() {
                   {mod.thumbnail && (
                     <div className="aspect-video w-full bg-muted relative overflow-hidden">
                       <img
-                        src={mod.thumbnail || "/placeholder.svg"}
+                        src={proxyImage(mod.thumbnail) || "/placeholder.svg"}
                         alt={mod.name}
                         className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
                       />
@@ -427,6 +437,7 @@ export default function ModsList() {
                               <img
                                 className="max-w-full h-auto rounded-lg my-4 border border-border"
                                 {...props}
+                                src={proxyImage(props.src) || "/placeholder.svg"}
                                 alt={props.alt || "이미지"}
                               />
                             ),
@@ -512,6 +523,7 @@ export default function ModsList() {
                                     <img
                                       {...props}
                                       alt={props.alt || "이미지"}
+                                      src={proxyImage(props.src) || "/placeholder.svg"}
                                       className="max-w-full h-auto rounded-lg border border-border my-4"
                                     />
                                   ),
@@ -525,10 +537,9 @@ export default function ModsList() {
                                   <h3 className="text-lg font-semibold mb-3">📷 참고 이미지</h3>
                                   <div className="relative w-full">
                                     <img
-                                      src={cleanImageUrl(mod.imageURL) || "/placeholder.svg"}
+                                      src={proxyImage(mod.imageURL) || "/placeholder.svg"}
                                       alt={`${mod.name} 참고 이미지`}
                                       className="max-w-full h-auto rounded-lg border border-border shadow-sm"
-                                      crossOrigin="anonymous"
                                       onError={(e) => {
                                         console.log("[v0] Image failed to load:", mod.imageURL)
                                         const target = e.currentTarget as HTMLImageElement
