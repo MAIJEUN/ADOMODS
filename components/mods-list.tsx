@@ -113,6 +113,12 @@ const getDiscordMessageUrl = (mod: Mod) => {
   return null
 }
 
+const cleanImageUrl = (url?: string) => {
+  if (!url) return "/placeholder.svg"
+  // Remove trailing & or ? from URL
+  return url.replace(/[&?]+$/, "")
+}
+
 export default function ModsList() {
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
@@ -504,9 +510,9 @@ export default function ModsList() {
                                   ),
                                   img: ({ node, ...props }) => (
                                     <img
-                                      src={mod.imageURL || "/placeholder.svg"}
-                                      alt={`${mod.name} 참고 이미지`}
-                                      className="max-w-full h-auto rounded-lg border border-border"
+                                      {...props}
+                                      alt={props.alt || "이미지"}
+                                      className="max-w-full h-auto rounded-lg border border-border my-4"
                                     />
                                   ),
                                 }}
@@ -515,13 +521,28 @@ export default function ModsList() {
                               </ReactMarkdown>
 
                               {mod.imageURL && (
-                                <div className="mt-6">
-                                  <h3 className="text-lg font-semibold mb-2">참고 이미지</h3>
-                                  <img
-                                    src={mod.imageURL || "/placeholder.svg"}
-                                    alt={`${mod.name} 참고 이미지`}
-                                    className="max-w-full h-auto rounded-lg border border-border"
-                                  />
+                                <div className="mt-6 pt-6 border-t border-border">
+                                  <h3 className="text-lg font-semibold mb-3">📷 참고 이미지</h3>
+                                  <div className="relative w-full">
+                                    <img
+                                      src={cleanImageUrl(mod.imageURL) || "/placeholder.svg"}
+                                      alt={`${mod.name} 참고 이미지`}
+                                      className="max-w-full h-auto rounded-lg border border-border shadow-sm"
+                                      crossOrigin="anonymous"
+                                      onError={(e) => {
+                                        console.log("[v0] Image failed to load:", mod.imageURL)
+                                        const target = e.currentTarget as HTMLImageElement
+                                        target.style.display = "none"
+                                        const parent = target.parentElement
+                                        if (parent) {
+                                          const errorMsg = document.createElement("p")
+                                          errorMsg.className = "text-sm text-muted-foreground"
+                                          errorMsg.textContent = "이미지를 불러올 수 없습니다."
+                                          parent.appendChild(errorMsg)
+                                        }
+                                      }}
+                                    />
+                                  </div>
                                 </div>
                               )}
                             </div>
