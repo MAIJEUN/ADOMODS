@@ -2,21 +2,13 @@
 
 import { useState, useMemo, useEffect } from "react"
 import useSWR from "swr"
-import ReactMarkdown from "react-markdown"
+import ReactMarkdown, { type Components } from "react-markdown"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
@@ -32,6 +24,7 @@ import {
   X,
   MessageSquare,
 } from "lucide-react"
+import { proxyImage, safeExternalUrl } from "@/lib/image-proxy"
 
 interface Mod {
   _id?: string
@@ -99,8 +92,10 @@ const generateModMarkdown = (mod: Mod) => {
     sections.push(`- **업로드 날짜:** ${formatDate(mod.uploadedTimestamp)}`)
   }
 
-  if (mod.download) {
-    sections.push(`\n## 다운로드\n[다운로드 링크](${mod.download})`)
+  const downloadUrl = safeExternalUrl(mod.download)
+  if (downloadUrl) {
+    // Angle brackets keep URLs with spaces or parentheses intact
+    sections.push(`\n## 다운로드\n[다운로드 링크](<${downloadUrl}>)`)
   }
 
   return sections.join("\n")
@@ -113,29 +108,67 @@ const getDiscordMessageUrl = (mod: Mod) => {
   return null
 }
 
-const cleanImageUrl = (url?: string) => {
-  if (!url) return "/placeholder.svg"
-  // Remove trailing & or ? from URL
-  return url.replace(/[&?]+$/, "")
+function ImageWithFallback({ src, alt, className }: { src?: string; alt: string; className?: string }) {
+  const [failed, setFailed] = useState(false)
+
+  if (failed) {
+    return <span className="block text-sm text-muted-foreground">이미지를 불러올 수 없습니다.</span>
+  }
+
+  return (
+    <img
+      src={proxyImage(src)}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className={className}
+      onError={() => setFailed(true)}
+    />
+  )
 }
 
-const proxyImage = (url?: string) => {
-  if (!url) return "/placeholder.svg"
-  const cleanUrl = url.replace(/[&?]+$/, "")
-  // Use our proxy API for Discord CDN images
-  if (cleanUrl.includes("cdn.discord.com") || cleanUrl.includes("media.discordapp.net")) {
-    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(cleanUrl)}`
-    console.log("[v0] Using proxy for:", cleanUrl)
-    console.log("[v0] Proxy URL:", proxyUrl)
-    return proxyUrl
-  }
-  return cleanUrl
+// Compact rendering for the card preview (inside a 2-line clamp)
+const previewMarkdownComponents: Components = {
+  p: ({ node, ...props }) => <span {...props} />,
+  strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
+  em: ({ node, ...props }) => <em {...props} />,
+  code: ({ node, ...props }) => <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props} />,
+  // Images would break the line clamp; they are shown in the detail dialog instead
+  img: () => null,
+}
+
+const detailMarkdownComponents: Components = {
+  h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-4 mb-2" {...props} />,
+  h2: ({ node, ...props }) => <h2 className="text-xl font-bold mt-3 mb-2" {...props} />,
+  p: ({ node, ...props }) => <p className="mb-2 break-words" {...props} />,
+  ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />,
+  ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-2 space-y-1" {...props} />,
+  li: ({ node, ...props }) => <li className="break-words" {...props} />,
+  // react-markdown v10 has no `inline` prop: block code is wrapped in <pre>, so style <pre> and
+  // reset the inline <code> styles inside it
+  pre: ({ node, ...props }) => (
+    <pre
+      className="bg-muted p-2 rounded text-sm overflow-x-auto mb-2 [&>code]:bg-transparent [&>code]:p-0 [&>code]:break-normal"
+      {...props}
+    />
+  ),
+  code: ({ node, ...props }) => <code className="bg-muted px-1.5 py-0.5 rounded text-sm break-all" {...props} />,
+  a: ({ node, ...props }) => (
+    <a className="text-primary hover:underline break-all" target="_blank" rel="noopener noreferrer" {...props} />
+  ),
+  img: ({ node, src, alt }) => (
+    <ImageWithFallback
+      src={typeof src === "string" ? src : undefined}
+      alt={alt || "이미지"}
+      className="max-w-full h-auto rounded-lg border border-border shadow-sm"
+    />
+  ),
 }
 
 export default function ModsList() {
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
-  const [sortBy, setSortBy] = useState("newest")
+  const [sortBy, setSortBy] = useState<SortType>("newest")
   const [selectedMod, setSelectedMod] = useState<Mod | null>(null)
   const [filters, setFilters] = useState<FilterState>({})
   const [developerSearch, setDeveloperSearch] = useState("")
@@ -151,15 +184,18 @@ export default function ModsList() {
     revalidateOnFocus: false,
   })
 
-  const modsArray = Array.isArray(data) ? data : data?.mods || data?.data || []
+  // Memoized so the fallback [] doesn't create a new array (and re-run every memo below) on each render
+  const modsArray: Mod[] = useMemo(
+    () => (Array.isArray(data) ? data : data?.mods || data?.data || []),
+    [data],
+  )
 
   const uniqueDevelopers = useMemo(() => {
-    const developers = modsArray
-      .filter((mod: Mod) => mod.version && mod.cachedUsername)
-      .map((mod: Mod) => mod.cachedUsername)
-      .filter((v: string, i: number, a: string[]) => a.indexOf(v) === i)
-      .sort()
-    return developers
+    const developers = new Set<string>()
+    for (const mod of modsArray) {
+      if (mod.version && mod.cachedUsername) developers.add(mod.cachedUsername)
+    }
+    return [...developers].sort((a, b) => a.localeCompare(b, "ko"))
   }, [modsArray])
 
   const filteredDevelopers = useMemo(() => {
@@ -177,13 +213,14 @@ export default function ModsList() {
             return false
           }
         }
-        if (filters.hasDownload && !mod.download) {
+        if (filters.hasDownload && !safeExternalUrl(mod.download)) {
           return false
         }
         return true
       })
       .filter((mod: Mod) => {
-        const query = debouncedSearch.toLowerCase()
+        const query = debouncedSearch.trim().toLowerCase()
+        if (!query) return true
         return (
           mod.name?.toLowerCase().includes(query) ||
           mod.description?.toLowerCase().includes(query) ||
@@ -198,9 +235,9 @@ export default function ModsList() {
           case "oldest":
             return (a.uploadedTimestamp || 0) - (b.uploadedTimestamp || 0)
           case "name-asc":
-            return (a.name || "").localeCompare(b.name || "")
+            return (a.name || "").localeCompare(b.name || "", "ko")
           case "name-desc":
-            return (b.name || "").localeCompare(a.name || "")
+            return (b.name || "").localeCompare(a.name || "", "ko")
           default:
             return 0
         }
@@ -346,6 +383,8 @@ export default function ModsList() {
             <Badge variant="secondary" className="gap-1">
               개발자: {filters.developers.join(", ")}
               <button
+                type="button"
+                aria-label="개발자 필터 제거"
                 onClick={() => setFilters((prev) => ({ ...prev, developers: undefined }))}
                 className="ml-1 hover:bg-muted rounded-full"
               >
@@ -357,6 +396,8 @@ export default function ModsList() {
             <Badge variant="secondary" className="gap-1">
               다운로드 가능
               <button
+                type="button"
+                aria-label="다운로드 필터 제거"
                 onClick={() => setFilters((prev) => ({ ...prev, hasDownload: undefined }))}
                 className="ml-1 hover:bg-muted rounded-full"
               >
@@ -402,208 +443,145 @@ export default function ModsList() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAndSortedMods.map((mod: Mod, index: number) => (
-                <Card
-                  key={mod.id || mod._id || index}
-                  className="group hover:border-primary/50 transition-all duration-200 overflow-hidden flex flex-col"
-                >
-                  {mod.thumbnail && (
-                    <div className="aspect-video w-full bg-muted relative overflow-hidden">
-                      <img
-                        src={proxyImage(mod.thumbnail) || "/placeholder.svg"}
-                        alt={mod.name}
-                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
-                      />
-                    </div>
-                  )}
-
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-lg line-clamp-1">{mod.name}</CardTitle>
-                      {mod.category && (
-                        <Badge variant="outline" className="shrink-0">
-                          {mod.category}
-                        </Badge>
-                      )}
-                    </div>
-                    {mod.description && (
-                      <CardDescription className="line-clamp-2">
-                        <ReactMarkdown
-                          components={{
-                            p: ({ node, ...props }) => <span {...props} />,
-                            strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
-                            em: ({ node, ...props }) => <em {...props} />,
-                            code: ({ node, ...props }) => (
-                              <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props} />
-                            ),
-                            img: ({ node, ...props }) => (
-                              <img
-                                className="max-w-full h-auto rounded-lg my-4 border border-border"
-                                {...props}
-                                src={proxyImage(props.src) || "/placeholder.svg"}
-                                alt={props.alt || "이미지"}
-                              />
-                            ),
-                          }}
-                        >
-                          {mod.description}
-                        </ReactMarkdown>
-                      </CardDescription>
+              {filteredAndSortedMods.map((mod: Mod, index: number) => {
+                const downloadUrl = safeExternalUrl(mod.download)
+                return (
+                  <Card
+                    key={mod.id || mod._id || index}
+                    className="group hover:border-primary/50 transition-all duration-200 overflow-hidden flex flex-col"
+                  >
+                    {mod.thumbnail && (
+                      <div className="aspect-video w-full bg-muted relative overflow-hidden">
+                        <img
+                          src={proxyImage(mod.thumbnail)}
+                          alt={mod.name}
+                          loading="lazy"
+                          decoding="async"
+                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
+                        />
+                      </div>
                     )}
-                  </CardHeader>
 
-                  <CardContent className="space-y-4 flex-1 flex flex-col">
-                    <div className="flex-1 space-y-2 text-sm">
-                      {mod.cachedUsername && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <User className="h-4 w-4" />
-                          <span className="text-foreground font-medium">{mod.cachedUsername}</span>
-                        </div>
+                    <CardHeader>
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-lg line-clamp-1">{mod.name}</CardTitle>
+                        {mod.category && (
+                          <Badge variant="outline" className="shrink-0">
+                            {mod.category}
+                          </Badge>
+                        )}
+                      </div>
+                      {mod.description && (
+                        <CardDescription className="line-clamp-2">
+                          <ReactMarkdown components={previewMarkdownComponents}>{mod.description}</ReactMarkdown>
+                        </CardDescription>
                       )}
-                      {mod.version && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Hash className="h-4 w-4" />
-                          <span>버전: {mod.version}</span>
-                        </div>
-                      )}
-                      {mod.uploadedTimestamp && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          <span>{formatDate(mod.uploadedTimestamp)}</span>
-                        </div>
-                      )}
-                    </div>
+                    </CardHeader>
 
-                    <div className="flex gap-2">
-                      {mod.download && (
-                        <Button className="flex-1" asChild>
-                          <a href={mod.download} target="_blank" rel="noopener noreferrer">
-                            <Download className="mr-2 h-4 w-4" />
-                            다운로드
-                          </a>
-                        </Button>
-                      )}
-
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" className="flex-1 bg-transparent">
-                            <Info className="mr-2 h-4 w-4" />
-                            자세히
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] flex flex-col">
-                          <DialogHeader className="flex-shrink-0">
-                            <DialogTitle className="text-2xl">{mod.name}</DialogTitle>
-                            <DialogDescription>모드 상세 정보</DialogDescription>
-                          </DialogHeader>
-
-                          <div className="flex-1 overflow-y-auto pr-2">
-                            <div className="prose prose-sm dark:prose-invert max-w-none [&>*]:break-words">
-                              <ReactMarkdown
-                                components={{
-                                  h1: ({ node, ...props }) => (
-                                    <h1 className="text-2xl font-bold mt-4 mb-2" {...props} />
-                                  ),
-                                  h2: ({ node, ...props }) => <h2 className="text-xl font-bold mt-3 mb-2" {...props} />,
-                                  p: ({ node, ...props }) => <p className="mb-2 break-words" {...props} />,
-                                  ul: ({ node, ...props }) => (
-                                    <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />
-                                  ),
-                                  ol: ({ node, ...props }) => (
-                                    <ol className="list-decimal pl-6 mb-2 space-y-1" {...props} />
-                                  ),
-                                  li: ({ node, ...props }) => <li className="break-words" {...props} />,
-                                  code: ({ node, inline, ...props }) =>
-                                    inline ? (
-                                      <code className="bg-muted px-1.5 py-0.5 rounded text-sm break-all" {...props} />
-                                    ) : (
-                                      <code className="block bg-muted p-2 rounded text-sm overflow-x-auto" {...props} />
-                                    ),
-                                  a: ({ node, ...props }) => (
-                                    <a className="text-primary hover:underline break-all" {...props} />
-                                  ),
-                                  img: ({ node, ...props }) => (
-                                    <img
-                                      {...props}
-                                      alt={props.alt || "이미지"}
-                                      src={proxyImage(props.src) || "/placeholder.svg"}
-                                      className="max-w-full h-auto rounded-lg border border-border shadow-sm"
-                                      onError={(e) => {
-                                        console.log("[v0] Image failed to load:", mod.imageURL)
-                                        const target = e.currentTarget as HTMLImageElement
-                                        target.style.display = "none"
-                                        const parent = target.parentElement
-                                        if (parent) {
-                                          const errorMsg = document.createElement("p")
-                                          errorMsg.className = "text-sm text-muted-foreground"
-                                          errorMsg.textContent = "이미지를 불러올 수 없습니다."
-                                          parent.appendChild(errorMsg)
-                                        }
-                                      }}
-                                    />
-                                  ),
-                                }}
-                              >
-                                {generateModMarkdown(mod)}
-                              </ReactMarkdown>
-
-                              {mod.imageURL && (
-                                <div className="mt-6 pt-6 border-t border-border">
-                                  <h3 className="text-lg font-semibold mb-3">📷 참고 이미지</h3>
-                                  <div className="relative w-full">
-                                    <img
-                                      src={proxyImage(mod.imageURL) || "/placeholder.svg"}
-                                      alt={`${mod.name} 참고 이미지`}
-                                      className="max-w-full h-auto rounded-lg border border-border shadow-sm"
-                                      onError={(e) => {
-                                        console.log("[v0] Image failed to load:", mod.imageURL)
-                                        const target = e.currentTarget as HTMLImageElement
-                                        target.style.display = "none"
-                                        const parent = target.parentElement
-                                        if (parent) {
-                                          const errorMsg = document.createElement("p")
-                                          errorMsg.className = "text-sm text-muted-foreground"
-                                          errorMsg.textContent = "이미지를 불러올 수 없습니다."
-                                          parent.appendChild(errorMsg)
-                                        }
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
+                    <CardContent className="space-y-4 flex-1 flex flex-col">
+                      <div className="flex-1 space-y-2 text-sm">
+                        {mod.cachedUsername && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <User className="h-4 w-4" />
+                            <span className="text-foreground font-medium">{mod.cachedUsername}</span>
                           </div>
+                        )}
+                        {mod.version && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Hash className="h-4 w-4" />
+                            <span>버전: {mod.version}</span>
+                          </div>
+                        )}
+                        {mod.uploadedTimestamp && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            <span>{formatDate(mod.uploadedTimestamp)}</span>
+                          </div>
+                        )}
+                      </div>
 
-                          <DialogFooter className="flex-shrink-0 flex justify-end gap-2 pt-4 border-t">
-                            {getDiscordMessageUrl(mod) && (
-                              <Button variant="outline" asChild>
-                                <a href={getDiscordMessageUrl(mod)!} target="_blank" rel="noopener noreferrer">
-                                  <MessageSquare className="mr-2 h-4 w-4" />
-                                  디스코드 메시지로 이동
-                                  <ExternalLink className="ml-2 h-3 w-3" />
-                                </a>
-                              </Button>
-                            )}
-                            {mod.download && (
-                              <Button asChild>
-                                <a href={mod.download} target="_blank" rel="noopener noreferrer">
-                                  <Download className="mr-2 h-4 w-4" />
-                                  다운로드
-                                  <ExternalLink className="ml-2 h-3 w-3" />
-                                </a>
-                              </Button>
-                            )}
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      <div className="flex gap-2">
+                        {downloadUrl && (
+                          <Button className="flex-1" asChild>
+                            <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
+                              <Download className="mr-2 h-4 w-4" />
+                              다운로드
+                            </a>
+                          </Button>
+                        )}
+
+                        <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setSelectedMod(mod)}>
+                          <Info className="mr-2 h-4 w-4" />
+                          자세히
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           )}
         </>
       )}
+
+      {/* One shared detail dialog instead of one per card */}
+      <Dialog open={selectedMod !== null} onOpenChange={(open) => !open && setSelectedMod(null)}>
+        {selectedMod && <ModDetail mod={selectedMod} />}
+      </Dialog>
     </div>
+  )
+}
+
+function ModDetail({ mod }: { mod: Mod }) {
+  const discordUrl = getDiscordMessageUrl(mod)
+  const downloadUrl = safeExternalUrl(mod.download)
+
+  return (
+    <DialogContent className="sm:max-w-5xl w-[95vw] max-h-[90vh] flex flex-col">
+      <DialogHeader className="flex-shrink-0">
+        <DialogTitle className="text-2xl">{mod.name}</DialogTitle>
+        <DialogDescription>모드 상세 정보</DialogDescription>
+      </DialogHeader>
+
+      <div className="flex-1 overflow-y-auto pr-2">
+        <div className="max-w-none [&>*]:break-words">
+          <ReactMarkdown components={detailMarkdownComponents}>{generateModMarkdown(mod)}</ReactMarkdown>
+
+          {mod.imageURL && (
+            <div className="mt-6 pt-6 border-t border-border">
+              <h3 className="text-lg font-semibold mb-3">📷 참고 이미지</h3>
+              <div className="relative w-full">
+                <ImageWithFallback
+                  src={mod.imageURL}
+                  alt={`${mod.name} 참고 이미지`}
+                  className="max-w-full h-auto rounded-lg border border-border shadow-sm"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <DialogFooter className="flex-shrink-0 flex justify-end gap-2 pt-4 border-t">
+        {discordUrl && (
+          <Button variant="outline" asChild>
+            <a href={discordUrl} target="_blank" rel="noopener noreferrer">
+              <MessageSquare className="mr-2 h-4 w-4" />
+              디스코드 메시지로 이동
+              <ExternalLink className="ml-2 h-3 w-3" />
+            </a>
+          </Button>
+        )}
+        {downloadUrl && (
+          <Button asChild>
+            <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
+              <Download className="mr-2 h-4 w-4" />
+              다운로드
+              <ExternalLink className="ml-2 h-3 w-3" />
+            </a>
+          </Button>
+        )}
+      </DialogFooter>
+    </DialogContent>
   )
 }
