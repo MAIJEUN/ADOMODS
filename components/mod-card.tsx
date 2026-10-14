@@ -11,7 +11,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ExternalLink, Info, Calendar, Hash, MessageSquare } from "lucide-react"
 import { proxyImage } from "@/lib/image-proxy"
 import { DownloadButton } from "@/components/download-button"
-import { discordRemarkPlugins, preprocessDiscordMarkdown } from "@/lib/discord-markdown"
+import {
+  DISCORD_EMOJI,
+  discordEmojiUrl,
+  discordRemarkPlugins,
+  preprocessDiscordMarkdown,
+  stripDiscordEmoji,
+} from "@/lib/discord-markdown"
 import { formatDate, getAvatarUrl, getDeveloperHref, getDiscordMessageUrl, normalizeMods, type Mod } from "@/lib/mods"
 
 const fetcher = async (url: string) => {
@@ -94,15 +100,42 @@ const discordComponents: Components = {
   hr: () => <hr className="my-3 border-border" />,
 }
 
+// Custom Discord emoji; shows :name: as text if the image can't be loaded (deleted emoji, bad ID)
+function DiscordEmoji({ src, name }: { src?: string; name?: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed || !src) return <span className="text-muted-foreground">{name}</span>
+  return (
+    <img
+      src={proxyImage(src)}
+      alt={name}
+      title={name}
+      loading="lazy"
+      decoding="async"
+      className="inline-block h-[1.2em] w-auto align-[-0.2em]"
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
 const renderEmoji = (src: unknown, alt?: string) => (
-  <img
-    src={proxyImage(typeof src === "string" ? src : undefined)}
-    alt={alt}
-    title={alt}
-    loading="lazy"
-    className="inline-block h-[1.375em] w-auto align-text-bottom"
-  />
+  <DiscordEmoji src={typeof src === "string" ? src : undefined} name={alt} />
 )
+
+// Plain text (e.g. a mod name) with Discord custom emoji rendered as images
+export function DiscordText({ text }: { text: string }) {
+  const parts: ReactNode[] = []
+  let last = 0
+  for (const match of text.matchAll(DISCORD_EMOJI)) {
+    const [raw, animated, name, id] = match
+    const index = match.index ?? 0
+    if (index > last) parts.push(text.slice(last, index))
+    parts.push(<DiscordEmoji key={index} src={discordEmojiUrl(id, !!animated)} name={`:${name}:`} />)
+    last = index + raw.length
+  }
+  if (last === 0) return <>{text}</>
+  parts.push(text.slice(last))
+  return <>{parts}</>
+}
 
 // Compact rendering for the card preview (inside a 2-line clamp); blocks become inline spans
 const previewMarkdownComponents: Components = {
@@ -253,7 +286,7 @@ export const ModCard = memo(function ModCard({
         <div className="aspect-video w-full bg-muted relative overflow-hidden">
           <img
             src={proxyImage(mod.thumbnail)}
-            alt={mod.name}
+            alt={stripDiscordEmoji(mod.name)}
             loading={eager ? "eager" : "lazy"}
             fetchPriority={eager ? "high" : undefined}
             decoding="async"
@@ -264,7 +297,9 @@ export const ModCard = memo(function ModCard({
 
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg line-clamp-1">{mod.name}</CardTitle>
+          <CardTitle className="text-lg line-clamp-1">
+            <DiscordText text={mod.name} />
+          </CardTitle>
           {mod.category && (
             <Badge variant="outline" className="shrink-0">
               {mod.category}
@@ -323,7 +358,9 @@ function ModDetailContent({ mod, onClose }: { mod: Mod; onClose: () => void }) {
   return (
     <DialogContent className="sm:max-w-5xl w-[95vw] max-h-[90vh] flex flex-col">
       <DialogHeader className="flex-shrink-0">
-        <DialogTitle className="text-2xl">{mod.name}</DialogTitle>
+        <DialogTitle className="text-2xl">
+          <DiscordText text={mod.name} />
+        </DialogTitle>
         <DialogDescription>모드 상세 정보</DialogDescription>
       </DialogHeader>
 
@@ -367,7 +404,7 @@ function ModDetailContent({ mod, onClose }: { mod: Mod; onClose: () => void }) {
               <div className="relative w-full">
                 <ImageWithFallback
                   src={mod.imageURL}
-                  alt={`${mod.name} 참고 이미지`}
+                  alt={`${stripDiscordEmoji(mod.name)} 참고 이미지`}
                   className="max-w-full h-auto rounded-lg border border-border shadow-sm"
                 />
               </div>

@@ -12,6 +12,10 @@ import { Search, Loader2, Filter, X } from "lucide-react"
 import { safeExternalUrl } from "@/lib/image-proxy"
 import type { Mod } from "@/lib/mods"
 import { ModCard, useModDialog, useMods } from "@/components/mod-card"
+import { stripDiscordEmoji } from "@/lib/discord-markdown"
+
+// Leading emoji like <:name:id> shouldn't decide the alphabetical order
+const sortName = (mod: Mod) => stripDiscordEmoji(mod.name || "")
 
 type SortType = "newest" | "oldest" | "name-asc" | "name-desc"
 
@@ -121,9 +125,9 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
           case "oldest":
             return (a.uploadedTimestamp || 0) - (b.uploadedTimestamp || 0)
           case "name-asc":
-            return (a.name || "").localeCompare(b.name || "", "ko")
+            return sortName(a).localeCompare(sortName(b), "ko")
           case "name-desc":
-            return (b.name || "").localeCompare(a.name || "", "ko")
+            return sortName(b).localeCompare(sortName(a), "ko")
           default:
             return 0
         }

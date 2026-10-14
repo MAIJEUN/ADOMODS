@@ -97,6 +97,15 @@ const formatDiscordTimestamp = (seconds: number, style = "f") => {
   return date.toLocaleString("ko-KR", TIMESTAMP_FORMATS[style] ?? TIMESTAMP_FORMATS.f)
 }
 
+// <:name:id> or <a:name:id> (animated)
+export const DISCORD_EMOJI = /<(a?):(\w+):(\d+)>/g
+
+export const discordEmojiUrl = (id: string, animated: boolean) =>
+  `https://cdn.discordapp.com/emojis/${id}.${animated ? "gif" : "webp"}?size=48`
+
+// For plain-text uses of a name (alt text, sorting, page titles)
+export const stripDiscordEmoji = (text: string) => text.replace(DISCORD_EMOJI, "").replace(/\s{2,}/g, " ").trim()
+
 const MENTION_CLASS = ["rounded", "bg-primary/15", "px-1", "font-medium", "text-primary"]
 
 const element = (hName: string, hProperties: Record<string, unknown>, children: MdNode[] = []): MdNode => ({
@@ -122,7 +131,7 @@ function splitInline(value: string): MdNode[] {
       nodes.push(
         element("img", {
           className: ["discord-emoji"],
-          src: `https://cdn.discordapp.com/emojis/${emojiId}.${animated ? "gif" : "webp"}?size=48`,
+          src: discordEmojiUrl(emojiId, !!animated),
           alt: `:${emojiName}:`,
           title: `:${emojiName}:`,
         }),
