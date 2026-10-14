@@ -116,6 +116,11 @@
 }
 
 @layer base {
+  /* The site is dark-only: tells the browser to draw dark native scrollbars and form controls */
+  :root {
+    color-scheme: dark;
+    scrollbar-color: var(--muted) transparent;
+  }
   * {
     @apply border-border outline-ring/50;
   }

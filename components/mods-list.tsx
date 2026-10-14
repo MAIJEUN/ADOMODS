@@ -27,6 +27,7 @@ import { isPlainClick, ModCard, useMods } from "@/components/mod-card"
 import { useModDialog } from "@/components/mod-detail"
 import { DeveloperAvatar } from "@/components/developer"
 import { DiscordText } from "@/components/mod-markdown"
+import { HorizontalScroller } from "@/components/horizontal-scroller"
 
 // "10/14" style date for the compact recent row
 const formatShortDate = (timestamp: number | undefined, locale: string) =>
@@ -115,7 +116,7 @@ function RecentMods({ mods, onOpen }: { mods: Mod[]; onOpen: (mod: Mod) => void 
         <Sparkles className="h-4 w-4 text-primary" />
         {t("list.recent")}
       </h2>
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2">
+      <HorizontalScroller className="gap-2">
         {mods.map((mod) => (
           <a
             key={getModId(mod)}
@@ -125,7 +126,7 @@ function RecentMods({ mods, onOpen }: { mods: Mod[]; onOpen: (mod: Mod) => void 
               e.preventDefault()
               onOpen(mod)
             }}
-            className="flex w-52 shrink-0 flex-col gap-1 rounded-lg border border-border bg-card px-3 py-2 transition-colors hover:border-primary/50"
+            className="flex w-52 shrink-0 snap-start flex-col gap-1 rounded-lg border border-border bg-card px-3 py-2 transition-colors hover:border-primary/50"
           >
             <span className="truncate text-sm font-semibold">
               <DiscordText text={mod.name} />
@@ -137,7 +138,7 @@ function RecentMods({ mods, onOpen }: { mods: Mod[]; onOpen: (mod: Mod) => void 
             </span>
           </a>
         ))}
-      </div>
+      </HorizontalScroller>
     </section>
   )
 }
