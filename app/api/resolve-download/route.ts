@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Download resolve error:", error)
     return NextResponse.json(
-      { files: [], sourceUrl: plan.url, note: "파일 정보를 가져오지 못했습니다." },
+      { files: [], sourceUrl: plan.url, note: "failed" },
       { status: 502 },
     )
   }

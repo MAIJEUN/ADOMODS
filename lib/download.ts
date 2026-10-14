@@ -6,13 +6,17 @@ export interface DownloadFile {
   size?: number
 }
 
+// Codes rather than text so the client can show them in the user's language
+export type DownloadNote = "failed" | "noAssets" | "noReleases" | "emptyFolder" | "noLink"
+
 export interface ResolvedDownload {
   files: DownloadFile[]
   // e.g. release name/tag, shown above the file list
   title?: string
+  prerelease?: boolean
   // Original page, offered when nothing (or not the right thing) could be resolved
   sourceUrl: string
-  note?: string
+  note?: DownloadNote
 }
 
 export type DownloadPlan =

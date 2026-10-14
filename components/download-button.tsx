@@ -4,9 +4,17 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Download, ExternalLink, FileArchive, Loader2 } from "lucide-react"
-import { formatFileSize, getDownloadPlan, type ResolvedDownload } from "@/lib/download"
+import { formatFileSize, getDownloadPlan, type DownloadNote, type ResolvedDownload } from "@/lib/download"
+import type { TranslationKey } from "@/lib/i18n"
+import { useT } from "@/lib/use-lang"
 
-const RESOLVE_FAILED = "파일 정보를 가져오지 못했습니다."
+const NOTE_KEYS: Record<DownloadNote, TranslationKey> = {
+  failed: "download.failed",
+  noAssets: "download.noAssets",
+  noReleases: "download.noReleases",
+  emptyFolder: "download.emptyFolder",
+  noLink: "download.noLink",
+}
 
 // One lookup per link per page session; failures are retried on the next click
 const resolveCache = new Map<string, Promise<ResolvedDownload>>()
@@ -19,7 +27,7 @@ function resolve(url: string) {
       .then((data: ResolvedDownload) => (Array.isArray(data?.files) ? data : Promise.reject()))
       .catch((): ResolvedDownload => {
         resolveCache.delete(url)
-        return { files: [], sourceUrl: url, note: RESOLVE_FAILED }
+        return { files: [], sourceUrl: url, note: "failed" }
       })
     resolveCache.set(url, pending)
   }
@@ -29,13 +37,14 @@ function resolve(url: string) {
 export function DownloadButton({ url, className, external }: { url?: string; className?: string; external?: boolean }) {
   const [loading, setLoading] = useState(false)
   const [picker, setPicker] = useState<ResolvedDownload | null>(null)
+  const { t } = useT()
   const plan = getDownloadPlan(url)
   if (!plan) return null
 
   const label = (
     <>
       {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-      다운로드
+      {t("download.button")}
       {external && <ExternalLink className="ml-2 h-3 w-3" />}
     </>
   )
@@ -84,13 +93,19 @@ export function DownloadButton({ url, className, external }: { url?: string; cla
         {picker && (
           <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col">
             <DialogHeader>
-              <DialogTitle>{picker.files.length > 0 ? "다운로드할 파일 선택" : "파일을 찾지 못했습니다"}</DialogTitle>
+              <DialogTitle>{picker.files.length > 0 ? t("download.pick") : t("download.notFound")}</DialogTitle>
               <DialogDescription>
-                {picker.title || (picker.files.length > 0 ? "파일을 선택하세요" : "원본 페이지에서 직접 받아주세요.")}
+                {picker.title
+                  ? `${picker.title}${picker.prerelease ? ` (${t("download.prerelease")})` : ""}`
+                  : picker.files.length > 0
+                    ? t("download.pickHint")
+                    : t("download.notFoundHint")}
               </DialogDescription>
             </DialogHeader>
 
-            {picker.note && <p className="text-sm text-muted-foreground">{picker.note}</p>}
+            {picker.note && NOTE_KEYS[picker.note] && (
+              <p className="text-sm text-muted-foreground">{t(NOTE_KEYS[picker.note])}</p>
+            )}
 
             {picker.files.length > 0 && (
               <ul className="-mx-2 flex-1 space-y-1 overflow-y-auto">
@@ -118,7 +133,7 @@ export function DownloadButton({ url, className, external }: { url?: string; cla
             <DialogFooter>
               <Button variant="outline" asChild>
                 <a href={picker.sourceUrl} target="_blank" rel="noopener noreferrer">
-                  원본 페이지 열기
+                  {t("download.openSource")}
                   <ExternalLink className="ml-2 h-3 w-3" />
                 </a>
               </Button>

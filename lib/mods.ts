@@ -57,14 +57,24 @@ export const normalizeMods = (data: unknown): Mod[] => {
   return obj?.mods || obj?.data || []
 }
 
-export const formatDate = (timestamp?: number) => {
-  if (!timestamp) return "알 수 없음"
-  return new Date(timestamp).toLocaleDateString("ko-KR", {
+export const formatDate = (timestamp?: number, locale = "ko-KR") => {
+  if (!timestamp) return locale.startsWith("ko") ? "알 수 없음" : "Unknown"
+  return new Date(timestamp).toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
   })
 }
+
+// Stable identifier used in /mods/[id] URLs and for favorites
+export const getModId = (mod: Mod) => String(mod._id ?? mod.id)
+export const getModHref = (mod: Mod) => `/mods/${encodeURIComponent(getModId(mod))}`
+
+const DAY_MS = 24 * 60 * 60 * 1000
+export const NEW_MOD_DAYS = 7
+export const RECENT_MOD_DAYS = 14
+export const isUploadedWithin = (mod: Mod, days: number, now = Date.now()) =>
+  !!mod.uploadedTimestamp && now - mod.uploadedTimestamp < days * DAY_MS
 
 export const getDiscordMessageUrl = (mod: Mod) => {
   if (mod.guild && mod.channel && mod.message) {
@@ -83,6 +93,37 @@ export const getDeveloperHref = (mod: Mod) => {
 
 export const isModOfDeveloper = (mod: Mod, developerId: string) =>
   mod.user === developerId || (!mod.user && mod.cachedUsername === developerId)
+
+export interface Developer {
+  id: string
+  name: string
+  // Newest mod that has an avatar (or the newest mod), for DeveloperAvatar
+  avatarMod: Mod
+  modCount: number
+  latestUpload?: number
+}
+
+// Groups mods by developer; name/avatar come from the developer's newest mod
+export function getDevelopers(mods: Mod[]): Developer[] {
+  const byId = new Map<string, Mod[]>()
+  for (const mod of mods) {
+    const id = getDeveloperId(mod)
+    if (!id || !mod.version) continue
+    const list = byId.get(id)
+    if (list) list.push(mod)
+    else byId.set(id, [mod])
+  }
+  return [...byId].map(([id, devMods]) => {
+    const sorted = devMods.sort((a, b) => (b.uploadedTimestamp || 0) - (a.uploadedTimestamp || 0))
+    return {
+      id,
+      name: sorted.find((mod) => mod.cachedUsername)?.cachedUsername || id,
+      avatarMod: sorted.find((mod) => mod.cachedAvatar) ?? sorted[0],
+      modCount: sorted.length,
+      latestUpload: sorted[0].uploadedTimestamp,
+    }
+  })
+}
 
 export const getAvatarUrl = (mod: Mod) => {
   const avatar = mod.cachedAvatar

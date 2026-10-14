@@ -40,9 +40,10 @@ export function githubReleaseToDownload(release: GithubRelease, sourceUrl: strin
   }))
   return {
     files,
-    title: release.prerelease ? `${title} (프리릴리즈)` : title,
+    title,
+    prerelease: !!release.prerelease,
     sourceUrl: release.html_url || sourceUrl,
-    note: files.length === 0 ? "이 릴리즈에는 첨부된 파일이 없습니다." : undefined,
+    note: files.length === 0 ? "noAssets" : undefined,
   }
 }
 
@@ -57,7 +58,7 @@ async function resolveGithub(url: URL): Promise<ResolvedDownload | null> {
     (await githubApi<GithubRelease[]>(`${base}/releases?per_page=1`))?.[0]
 
   if (!release) {
-    return { files: [], sourceUrl: url.toString(), note: "이 저장소에는 릴리즈가 없습니다." }
+    return { files: [], sourceUrl: url.toString(), note: "noReleases" }
   }
   return githubReleaseToDownload(release, url.toString())
 }
@@ -84,7 +85,7 @@ async function resolveDriveFolder(url: URL): Promise<ResolvedDownload | null> {
   return {
     files,
     sourceUrl: url.toString(),
-    note: files.length === 0 ? "폴더에서 파일을 찾지 못했습니다." : undefined,
+    note: files.length === 0 ? "emptyFolder" : undefined,
   }
 }
 
@@ -106,7 +107,7 @@ async function resolveMediafire(url: URL): Promise<ResolvedDownload | null> {
   })
   if (!response.ok) throw new Error(`MediaFire returned ${response.status}`)
   const direct = parseMediafireHtml(await response.text())
-  if (!direct) return { files: [], sourceUrl: url.toString(), note: "다운로드 링크를 찾지 못했습니다." }
+  if (!direct) return { files: [], sourceUrl: url.toString(), note: "noLink" }
   const name = decodeURIComponent(new URL(direct).pathname.split("/").pop() || "download")
   return { files: [{ name, url: direct }], sourceUrl: url.toString() }
 }

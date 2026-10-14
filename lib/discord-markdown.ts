@@ -1,4 +1,5 @@
 import type { Options } from "react-markdown"
+import { localeOf, translate, type Lang } from "@/lib/i18n"
 import remarkBreaks from "remark-breaks"
 import remarkGfm from "remark-gfm"
 
@@ -87,14 +88,14 @@ const TIMESTAMP_FORMATS: Record<string, Intl.DateTimeFormatOptions> = {
   F: { dateStyle: "full", timeStyle: "short" },
 }
 
-const formatDiscordTimestamp = (seconds: number, style = "f") => {
+const formatDiscordTimestamp = (lang: Lang, seconds: number, style = "f") => {
   const date = new Date(seconds * 1000)
   if (style === "R") {
     const diff = seconds - Date.now() / 1000
     const [unit, size] = RELATIVE_UNITS.find(([, s]) => Math.abs(diff) >= s) ?? RELATIVE_UNITS[RELATIVE_UNITS.length - 1]
-    return new Intl.RelativeTimeFormat("ko", { numeric: "auto" }).format(Math.round(diff / size), unit)
+    return new Intl.RelativeTimeFormat(lang, { numeric: "auto" }).format(Math.round(diff / size), unit)
   }
-  return date.toLocaleString("ko-KR", TIMESTAMP_FORMATS[style] ?? TIMESTAMP_FORMATS.f)
+  return date.toLocaleString(localeOf(lang), TIMESTAMP_FORMATS[style] ?? TIMESTAMP_FORMATS.f)
 }
 
 // <:name:id> or <a:name:id> (animated)
@@ -116,7 +117,7 @@ const element = (hName: string, hProperties: Record<string, unknown>, children: 
 
 const INLINE_TOKEN = /\|\|(.+?)\|\||<(a?):(\w+):(\d+)>|<t:(-?\d+)(?::([tTdDfFR]))?>|<@!?(\d+)>|<@&(\d+)>|<#(\d+)>/g
 
-function splitInline(value: string): MdNode[] {
+function splitInline(value: string, lang: Lang): MdNode[] {
   const nodes: MdNode[] = []
   let last = 0
   for (const match of value.matchAll(INLINE_TOKEN)) {
@@ -139,13 +140,19 @@ function splitInline(value: string): MdNode[] {
     } else if (ts) {
       const seconds = Number(ts)
       nodes.push(
-        element("time", { className: ["rounded", "bg-muted", "px-1"], title: formatDiscordTimestamp(seconds, "F") }, [
-          { type: "text", value: formatDiscordTimestamp(seconds, tsStyle) },
+        element("time", { className: ["rounded", "bg-muted", "px-1"], title: formatDiscordTimestamp(lang, seconds, "F") }, [
+          { type: "text", value: formatDiscordTimestamp(lang, seconds, tsStyle) },
         ]),
       )
     } else {
       // IDs can't be resolved to names without the Discord API
-      const label = userId ? "@사용자" : roleId ? "@역할" : channelId ? "#채널" : raw
+      const label = userId
+        ? translate(lang, "md.user")
+        : roleId
+          ? translate(lang, "md.role")
+          : channelId
+            ? translate(lang, "md.channel")
+            : raw
       nodes.push(element("span", { className: MENTION_CLASS }, [{ type: "text", value: label }]))
     }
   }
@@ -195,7 +202,7 @@ function splitSubtext(paragraph: MdNode): MdNode[] {
   return result
 }
 
-function transform(node: MdNode, source: string) {
+function transform(node: MdNode, source: string, lang: Lang) {
   if (!node.children) return
 
   // CommonMark treats __text__ as bold; in Discord it is underline
@@ -206,21 +213,25 @@ function transform(node: MdNode, source: string) {
 
   node.children = node.children.flatMap((child) => {
     if (child.type === "paragraph") return splitSubtext(child)
-    if (child.type === "text" && child.value) return splitInline(child.value)
+    if (child.type === "text" && child.value) return splitInline(child.value, lang)
     return [child]
   })
-  for (const child of node.children) transform(child, source)
+  for (const child of node.children) transform(child, source, lang)
 }
 
-function remarkDiscord() {
+function remarkDiscord(options: { lang: Lang }) {
   return (tree: MdNode, file: { value?: unknown }) => {
-    transform(tree, typeof file.value === "string" ? file.value : "")
+    transform(tree, typeof file.value === "string" ? file.value : "", options.lang)
   }
 }
 
-export const discordRemarkPlugins: Options["remarkPlugins"] = [
-  // Discord has no single-tilde strikethrough
-  [remarkGfm, { singleTilde: false }],
-  remarkBreaks,
-  remarkDiscord,
-]
+const pluginsByLang = {} as Record<Lang, Options["remarkPlugins"]>
+
+// Mention labels and timestamps are rendered in the given language
+export const getDiscordRemarkPlugins = (lang: Lang) =>
+  (pluginsByLang[lang] ??= [
+    // Discord has no single-tilde strikethrough
+    [remarkGfm, { singleTilde: false }],
+    remarkBreaks,
+    [remarkDiscord, { lang }],
+  ])
