@@ -1,3 +1,5 @@
+import { safeExternalUrl } from "@/lib/image-proxy"
+
 // Overridable for local testing against a mock API
 export const MODS_API_URL = process.env.MODS_API_URL || "https://bot.adofai.gg/api/mods/"
 
@@ -66,6 +68,10 @@ export const formatDate = (timestamp?: number, locale = "ko-KR") => {
   })
 }
 
+// Mods shown in lists (mod list, recent row, developer pages and counts): only entries with a
+// version and a usable download link. Others are incomplete bot entries.
+export const isListedMod = (mod: Mod) => !!mod.version && !!safeExternalUrl(mod.download)
+
 // Stable identifier used in /mods/[id] URLs and for favorites
 export const getModId = (mod: Mod) => String(mod._id ?? mod.id)
 export const getModHref = (mod: Mod) => `/mods/${encodeURIComponent(getModId(mod))}`
@@ -108,7 +114,7 @@ export function getDevelopers(mods: Mod[]): Developer[] {
   const byId = new Map<string, Mod[]>()
   for (const mod of mods) {
     const id = getDeveloperId(mod)
-    if (!id || !mod.version) continue
+    if (!id || !isListedMod(mod)) continue
     const list = byId.get(id)
     if (list) list.push(mod)
     else byId.set(id, [mod])

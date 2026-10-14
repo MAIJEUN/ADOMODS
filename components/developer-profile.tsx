@@ -5,7 +5,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, ExternalLink, Loader2, Package } from "lucide-react"
-import { formatDate, getModId, isModOfDeveloper, type Mod } from "@/lib/mods"
+import { formatDate, getModId, isListedMod, isModOfDeveloper, type Mod } from "@/lib/mods"
 import { useT } from "@/lib/use-lang"
 import { BackButton } from "@/components/back-button"
 import { ModCard, useMods } from "@/components/mod-card"
@@ -20,7 +20,7 @@ export default function DeveloperProfile({ developerId, initialMods }: { develop
   const developerMods = useMemo(
     () =>
       mods
-        .filter((mod: Mod) => mod.version && isModOfDeveloper(mod, developerId))
+        .filter((mod: Mod) => isListedMod(mod) && isModOfDeveloper(mod, developerId))
         .sort((a, b) => (b.uploadedTimestamp || 0) - (a.uploadedTimestamp || 0)),
     [mods, developerId],
   )

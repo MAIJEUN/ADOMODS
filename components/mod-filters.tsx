@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { ChevronDown, Download, Search, Sparkles, Star, Users, X } from "lucide-react"
+import { ChevronDown, Search, Sparkles, Star, Users, X } from "lucide-react"
 import { matchesQuery, toChosungKey } from "@/lib/hangul"
 import type { Developer } from "@/lib/mods"
 import { useT } from "@/lib/use-lang"
@@ -19,14 +19,13 @@ export type SortType = (typeof SORT_TYPES)[number]
 export interface FilterState {
   // Developer IDs (see getDeveloperId)
   developers?: string[]
-  hasDownload?: boolean
   favoritesOnly?: boolean
   // Uploaded within NEW_MOD_DAYS
   newOnly?: boolean
 }
 
 export const countActiveFilters = (filters: FilterState) =>
-  (filters.developers?.length ?? 0) + [filters.hasDownload, filters.favoritesOnly, filters.newOnly].filter(Boolean).length
+  (filters.developers?.length ?? 0) + [filters.favoritesOnly, filters.newOnly].filter(Boolean).length
 
 // On/off filter shown as a button; aria-pressed tells assistive tech whether it's on
 function ToggleChip({
@@ -177,7 +176,7 @@ export function ModFilters({
   const selectedDevelopers = filters.developers ?? []
   const activeCount = countActiveFilters(filters)
 
-  const toggle = (key: "hasDownload" | "favoritesOnly" | "newOnly") =>
+  const toggle = (key: "favoritesOnly" | "newOnly") =>
     onFiltersChange((prev) => ({ ...prev, [key]: prev[key] ? undefined : true }))
 
   const setDevelopers = (ids: string[]) =>
@@ -251,9 +250,6 @@ export function ModFilters({
         >
           {t("list.favorites")}
           {favoritesCount > 0 && <span className="text-xs opacity-70">{favoritesCount}</span>}
-        </ToggleChip>
-        <ToggleChip pressed={!!filters.hasDownload} onToggle={() => toggle("hasDownload")} icon={<Download />}>
-          {t("list.downloadable")}
         </ToggleChip>
         <ToggleChip pressed={!!filters.newOnly} onToggle={() => toggle("newOnly")} icon={<Sparkles />}>
           {t("list.newOnly")}

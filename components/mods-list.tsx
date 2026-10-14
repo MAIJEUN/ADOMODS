@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect, useLayoutEffect, useCallback, useRef } fr
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Loader2, Sparkles } from "lucide-react"
-import { safeExternalUrl } from "@/lib/image-proxy"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { useFavorites } from "@/lib/favorites"
 import { matchesQuery, toChosungKey } from "@/lib/hangul"
@@ -14,6 +13,7 @@ import {
   getDevelopers,
   getModHref,
   getModId,
+  isListedMod,
   isUploadedWithin,
   NEW_MOD_DAYS,
   RECENT_MOD_DAYS,
@@ -49,7 +49,7 @@ const savedState = {
   scrollY: 0,
 }
 
-// ?q=...&sort=...&dev=<id>&dev=<id>&dl=1&fav=1&new=1 — shareable and survives reloads
+// ?q=...&sort=...&dev=<id>&dev=<id>&fav=1&new=1 — shareable and survives reloads
 const parseQuery = (search: string) => {
   const params = new URLSearchParams(search)
   const sort = params.get("sort")
@@ -59,7 +59,6 @@ const parseQuery = (search: string) => {
     sortBy: SORT_TYPES.includes(sort as SortType) ? (sort as SortType) : "newest",
     filters: {
       developers: developers.length > 0 ? developers : undefined,
-      hasDownload: params.get("dl") === "1" || undefined,
       favoritesOnly: params.get("fav") === "1" || undefined,
       newOnly: params.get("new") === "1" || undefined,
     } satisfies FilterState,
@@ -71,7 +70,6 @@ const buildQuery = (searchQuery: string, sortBy: SortType, filters: FilterState)
   if (searchQuery.trim()) params.set("q", searchQuery.trim())
   if (sortBy !== "newest") params.set("sort", sortBy)
   for (const id of filters.developers ?? []) params.append("dev", id)
-  if (filters.hasDownload) params.set("dl", "1")
   if (filters.favoritesOnly) params.set("fav", "1")
   if (filters.newOnly) params.set("new", "1")
   const query = params.toString()
@@ -210,9 +208,8 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
     const query = debouncedSearch.trim().toLowerCase()
     return modsArray
       .filter((mod: Mod) => {
-        if (!mod.version) return false
+        if (!isListedMod(mod)) return false
         if (filters.developers?.length && !filters.developers.includes(getDeveloperId(mod) ?? "")) return false
-        if (filters.hasDownload && !safeExternalUrl(mod.download)) return false
         if (filters.favoritesOnly && !favorites.has(getModId(mod))) return false
         if (filters.newOnly && !isUploadedWithin(mod, NEW_MOD_DAYS)) return false
         if (!query) return true
@@ -242,7 +239,7 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
   const recentMods = useMemo(
     () =>
       modsArray
-        .filter((mod) => mod.version && isUploadedWithin(mod, RECENT_MOD_DAYS))
+        .filter((mod) => isListedMod(mod) && isUploadedWithin(mod, RECENT_MOD_DAYS))
         .sort((a, b) => (b.uploadedTimestamp || 0) - (a.uploadedTimestamp || 0))
         .slice(0, RECENT_LIMIT),
     [modsArray],
