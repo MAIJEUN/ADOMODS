@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useLayoutEffect, useCallback, useRef } from "react"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,11 +20,43 @@ interface FilterState {
   hasDownload?: boolean
 }
 
-export default function ModsList() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [debouncedSearch, setDebouncedSearch] = useState("")
-  const [sortBy, setSortBy] = useState<SortType>("newest")
-  const [filters, setFilters] = useState<FilterState>({})
+// Cards are rendered in pages as the user scrolls; rendering hundreds of markdown cards at once is slow
+const PAGE_SIZE = 24
+// Above-the-fold cards whose thumbnails load eagerly
+const EAGER_CARDS = 6
+
+// List state kept across client-side navigations, so coming back from a developer page
+// restores the search, filters, loaded cards and scroll position
+const savedState = {
+  searchQuery: "",
+  sortBy: "newest" as SortType,
+  filters: {} as FilterState,
+  visibleCount: PAGE_SIZE,
+  scrollY: 0,
+}
+
+function LoadMoreSentinel({ onLoadMore }: { onLoadMore: () => void }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    // Re-created whenever onLoadMore changes (after each page), so it fires again if still in view
+    const observer = new IntersectionObserver((entries) => entries[0]?.isIntersecting && onLoadMore(), {
+      rootMargin: "1200px 0px",
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [onLoadMore])
+
+  return <div ref={ref} aria-hidden className="h-px" />
+}
+
+export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
+  const [searchQuery, setSearchQuery] = useState(savedState.searchQuery)
+  const [debouncedSearch, setDebouncedSearch] = useState(savedState.searchQuery)
+  const [sortBy, setSortBy] = useState<SortType>(savedState.sortBy)
+  const [filters, setFilters] = useState<FilterState>(savedState.filters)
   const [developerSearch, setDeveloperSearch] = useState("")
 
   useEffect(() => {
@@ -34,8 +66,20 @@ export default function ModsList() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  const { mods: modsArray, error, isLoading } = useMods()
+  const { mods: modsArray, error, isLoading } = useMods(initialMods)
   const { openMod, dialog } = useModDialog()
+
+  // Lowercased search text per mod, built once per data load instead of on every keystroke
+  const searchIndex = useMemo(
+    () =>
+      new Map(
+        modsArray.map((mod) => [
+          mod,
+          [mod.name, mod.description, mod.author, mod.cachedUsername].filter(Boolean).join("\n").toLowerCase(),
+        ]),
+      ),
+    [modsArray],
+  )
 
   const uniqueDevelopers = useMemo(() => {
     const developers = new Set<string>()
@@ -68,12 +112,7 @@ export default function ModsList() {
       .filter((mod: Mod) => {
         const query = debouncedSearch.trim().toLowerCase()
         if (!query) return true
-        return (
-          mod.name?.toLowerCase().includes(query) ||
-          mod.description?.toLowerCase().includes(query) ||
-          mod.author?.toLowerCase().includes(query) ||
-          mod.cachedUsername?.toLowerCase().includes(query)
-        )
+        return searchIndex.get(mod)?.includes(query)
       })
       .sort((a: Mod, b: Mod) => {
         switch (sortBy) {
@@ -89,7 +128,29 @@ export default function ModsList() {
             return 0
         }
       })
-  }, [modsArray, filters, debouncedSearch, sortBy])
+  }, [modsArray, searchIndex, filters, debouncedSearch, sortBy])
+
+  // Changing the search, sort or filters starts again from the first page
+  const listKey = JSON.stringify([debouncedSearch, sortBy, filters])
+  const [visible, setVisible] = useState({ key: listKey, count: savedState.visibleCount })
+  const visibleCount = visible.key === listKey ? visible.count : PAGE_SIZE
+  const visibleMods = filteredAndSortedMods.slice(0, visibleCount)
+  const loadMore = useCallback(
+    () => setVisible({ key: listKey, count: visibleCount + PAGE_SIZE }),
+    [listKey, visibleCount],
+  )
+
+  useEffect(() => {
+    Object.assign(savedState, { searchQuery, sortBy, filters, visibleCount })
+  }, [searchQuery, sortBy, filters, visibleCount])
+
+  // Restore the scroll position from the last visit; save it when leaving
+  useLayoutEffect(() => {
+    if (savedState.scrollY) window.scrollTo(0, savedState.scrollY)
+    return () => {
+      savedState.scrollY = window.scrollY
+    }
+  }, [])
 
   const activeFilterCount = Object.values(filters).filter(
     (v) => v !== undefined && (Array.isArray(v) ? v.length > 0 : true),
@@ -290,13 +351,15 @@ export default function ModsList() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAndSortedMods.map((mod: Mod, index: number) => (
-                <ModCard key={mod.id || mod._id || index} mod={mod} onOpen={openMod} />
+              {visibleMods.map((mod: Mod, index: number) => (
+                <ModCard key={mod.id || mod._id || index} mod={mod} onOpen={openMod} eager={index < EAGER_CARDS} />
               ))}
             </div>
           )}
         </>
       )}
+
+      {visibleCount < filteredAndSortedMods.length && <LoadMoreSentinel onLoadMore={loadMore} />}
 
       {dialog}
     </div>

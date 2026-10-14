@@ -1,38 +1,16 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import Link from "next/link"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Calendar, ExternalLink, Loader2, Package } from "lucide-react"
-import { proxyImage } from "@/lib/image-proxy"
-import { formatDate, getAvatarUrl, isModOfDeveloper, type Mod } from "@/lib/mods"
-import { ModCard, useModDialog, useMods } from "@/components/mod-card"
+import { formatDate, isModOfDeveloper, type Mod } from "@/lib/mods"
+import { DeveloperAvatar, ModCard, useModDialog, useMods } from "@/components/mod-card"
 
-function Avatar({ src, name }: { src: string | null; name: string }) {
-  const [failed, setFailed] = useState(false)
-
-  if (!src || failed) {
-    return (
-      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-muted text-3xl font-bold text-muted-foreground">
-        {name.charAt(0).toUpperCase()}
-      </div>
-    )
-  }
-
-  return (
-    <img
-      src={proxyImage(src)}
-      alt={`${name} 프로필 이미지`}
-      className="h-20 w-20 shrink-0 rounded-full border border-border object-cover"
-      onError={() => setFailed(true)}
-    />
-  )
-}
-
-export default function DeveloperProfile({ developerId }: { developerId: string }) {
-  const { mods, error, isLoading } = useMods()
+export default function DeveloperProfile({ developerId, initialMods }: { developerId: string; initialMods?: Mod[] }) {
+  const { mods, error, isLoading } = useMods(initialMods)
   const { openMod, dialog } = useModDialog()
 
   const developerMods = useMemo(
@@ -46,14 +24,15 @@ export default function DeveloperProfile({ developerId }: { developerId: string 
   // Newest entry has the most recent cached name/avatar
   const latest = developerMods[0]
   const name = latest?.cachedUsername || developerId
-  const avatarUrl = developerMods.map(getAvatarUrl).find(Boolean) ?? null
+  const avatarMod = developerMods.find((mod) => mod.cachedAvatar) ?? latest
   const firstUpload = developerMods[developerMods.length - 1]?.uploadedTimestamp
   const discordProfileUrl = latest?.user && /^\d+$/.test(latest.user) ? `https://discord.com/users/${latest.user}` : null
 
   return (
     <div className="space-y-8">
+      {/* scroll={false}: the list restores its own scroll position */}
       <Button variant="ghost" size="sm" asChild className="-ml-2">
-        <Link href="/">
+        <Link href="/" scroll={false}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           전체 모드
         </Link>
@@ -90,7 +69,7 @@ export default function DeveloperProfile({ developerId }: { developerId: string 
       {!isLoading && !error && developerMods.length > 0 && (
         <>
           <section className="flex flex-col gap-6 sm:flex-row sm:items-center">
-            <Avatar src={avatarUrl} name={name} />
+            {avatarMod && <DeveloperAvatar mod={avatarMod} size="lg" />}
             <div className="min-w-0 flex-1 space-y-2">
               <h2 className="text-3xl font-bold break-words">{name}</h2>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">

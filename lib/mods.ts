@@ -1,4 +1,5 @@
-export const MODS_API_URL = "https://bot.adofai.gg/api/mods/"
+// Overridable for local testing against a mock API
+export const MODS_API_URL = process.env.MODS_API_URL || "https://bot.adofai.gg/api/mods/"
 
 export interface Mod {
   _id?: string
@@ -8,10 +9,8 @@ export interface Mod {
   author?: string
   cachedUsername?: string
   version?: string
-  downloads?: number
   thumbnail?: string
   download?: string
-  downloadUrl?: string
   category?: string
   uploadedTimestamp?: number
   user?: string
@@ -20,7 +19,35 @@ export interface Mod {
   message?: string
   cachedAvatar?: string
   imageURL?: string
-  [key: string]: any
+}
+
+// Only the fields the UI uses; keeps the API response and the server-rendered page payload small
+const MOD_FIELDS = [
+  "_id",
+  "id",
+  "name",
+  "description",
+  "author",
+  "cachedUsername",
+  "version",
+  "thumbnail",
+  "download",
+  "category",
+  "uploadedTimestamp",
+  "user",
+  "guild",
+  "channel",
+  "message",
+  "cachedAvatar",
+  "imageURL",
+] as const satisfies readonly (keyof Mod)[]
+
+const slimMod = (mod: Mod): Mod => {
+  const slim: Record<string, unknown> = {}
+  for (const key of MOD_FIELDS) {
+    if (mod[key] !== undefined && mod[key] !== null) slim[key] = mod[key]
+  }
+  return slim as unknown as Mod
 }
 
 // The API has returned a bare array as well as { mods } / { data }
@@ -77,5 +104,15 @@ export async function fetchModsFromUpstream(): Promise<Mod[]> {
   if (!response.ok) {
     throw new Error(`API returned ${response.status}`)
   }
-  return normalizeMods(await response.json())
+  return normalizeMods(await response.json()).map(slimMod)
+}
+
+// For server-rendered pages: never fail the render, the client refetches if this comes back empty
+export async function getModsSafe(): Promise<Mod[]> {
+  try {
+    return await fetchModsFromUpstream()
+  } catch (error) {
+    console.error("Mods fetch error:", error)
+    return []
+  }
 }

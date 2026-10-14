@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useCallback, useMemo, useState, type ReactNode } from "react"
+import { memo, useCallback, useMemo, useState, type ReactElement, type ReactNode } from "react"
 import Link from "next/link"
 import useSWR from "swr"
 import ReactMarkdown, { type Components } from "react-markdown"
@@ -8,10 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Download, ExternalLink, Info, User, Calendar, Hash, MessageSquare } from "lucide-react"
+import { Download, ExternalLink, Info, Calendar, Hash, MessageSquare } from "lucide-react"
 import { proxyImage, safeExternalUrl } from "@/lib/image-proxy"
 import { discordRemarkPlugins, preprocessDiscordMarkdown } from "@/lib/discord-markdown"
-import { formatDate, getDeveloperHref, getDiscordMessageUrl, normalizeMods, type Mod } from "@/lib/mods"
+import { formatDate, getAvatarUrl, getDeveloperHref, getDiscordMessageUrl, normalizeMods, type Mod } from "@/lib/mods"
 
 const fetcher = async (url: string) => {
   const res = await fetch(url)
@@ -19,9 +19,13 @@ const fetcher = async (url: string) => {
   return res.json()
 }
 
-export function useMods() {
+// `initialMods` comes from the server render; when present the client doesn't refetch on mount
+export function useMods(initialMods?: Mod[]) {
+  const hasInitial = !!initialMods && initialMods.length > 0
   const { data, error, isLoading } = useSWR("/api/mods", fetcher, {
     revalidateOnFocus: false,
+    fallbackData: hasInitial ? initialMods : undefined,
+    revalidateOnMount: !hasInitial,
   })
   // Memoized so the fallback [] doesn't create a new array (and re-run every memo downstream) on each render
   const mods = useMemo(() => normalizeMods(data), [data])
@@ -162,6 +166,62 @@ const detailMarkdownComponents: Components = {
     ),
 }
 
+// Parsed card previews survive remounts (e.g. coming back from a developer page)
+const previewCache = new Map<string, ReactElement>()
+const PREVIEW_MAX_LINES = 8
+const PREVIEW_MAX_CHARS = 400
+
+function DescriptionPreview({ description }: { description: string }) {
+  let preview = previewCache.get(description)
+  if (preview === undefined) {
+    // Only two lines are visible, so don't parse the whole description
+    let source = description.split("\n", PREVIEW_MAX_LINES).join("\n")
+    if (source.length > PREVIEW_MAX_CHARS) source = source.slice(0, PREVIEW_MAX_CHARS)
+    preview = (
+      <ReactMarkdown components={previewMarkdownComponents} remarkPlugins={discordRemarkPlugins}>
+        {preprocessDiscordMarkdown(source)}
+      </ReactMarkdown>
+    )
+    previewCache.set(description, preview)
+  }
+  return preview
+}
+
+const AVATAR_SIZES = {
+  sm: "h-5 w-5 text-[10px]",
+  md: "h-6 w-6 text-xs",
+  lg: "h-20 w-20 text-3xl",
+}
+
+export function DeveloperAvatar({ mod, size = "sm" }: { mod: Mod; size?: keyof typeof AVATAR_SIZES }) {
+  const [failed, setFailed] = useState(false)
+  const src = getAvatarUrl(mod)
+  const name = mod.cachedUsername || "?"
+  const sizeClass = AVATAR_SIZES[size]
+
+  if (!src || failed) {
+    return (
+      <span
+        aria-hidden
+        className={`${sizeClass} inline-flex shrink-0 items-center justify-center rounded-full bg-muted font-bold text-muted-foreground`}
+      >
+        {name.charAt(0).toUpperCase()}
+      </span>
+    )
+  }
+
+  return (
+    <img
+      src={proxyImage(src)}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      className={`${sizeClass} shrink-0 rounded-full border border-border object-cover bg-muted`}
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
 export function DeveloperLink({ mod, className, onClick }: { mod: Mod; className?: string; onClick?: () => void }) {
   const href = getDeveloperHref(mod)
   if (!href) return <span className={className}>{mod.cachedUsername}</span>
@@ -177,10 +237,13 @@ export const ModCard = memo(function ModCard({
   mod,
   onOpen,
   showDeveloper = true,
+  eager = false,
 }: {
   mod: Mod
   onOpen: (mod: Mod) => void
   showDeveloper?: boolean
+  // Above-the-fold cards load their thumbnail immediately
+  eager?: boolean
 }) {
   const downloadUrl = safeExternalUrl(mod.download)
 
@@ -192,7 +255,8 @@ export const ModCard = memo(function ModCard({
           <img
             src={proxyImage(mod.thumbnail)}
             alt={mod.name}
-            loading="lazy"
+            loading={eager ? "eager" : "lazy"}
+            fetchPriority={eager ? "high" : undefined}
             decoding="async"
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
           />
@@ -210,9 +274,7 @@ export const ModCard = memo(function ModCard({
         </div>
         {mod.description && (
           <CardDescription className="line-clamp-2">
-            <ReactMarkdown components={previewMarkdownComponents} remarkPlugins={discordRemarkPlugins}>
-              {preprocessDiscordMarkdown(mod.description)}
-            </ReactMarkdown>
+            <DescriptionPreview description={mod.description} />
           </CardDescription>
         )}
       </CardHeader>
@@ -221,8 +283,8 @@ export const ModCard = memo(function ModCard({
         <div className="flex-1 space-y-2 text-sm">
           {showDeveloper && mod.cachedUsername && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <User className="h-4 w-4" />
-              <DeveloperLink mod={mod} className="text-foreground font-medium" />
+              <DeveloperAvatar mod={mod} />
+              <DeveloperLink mod={mod} className="text-foreground font-medium truncate" />
             </div>
           )}
           {mod.version && (
@@ -290,7 +352,10 @@ function ModDetailContent({ mod, onClose }: { mod: Mod; onClose: () => void }) {
             {mod.cachedUsername && (
               <li>
                 <strong>제작자:</strong>{" "}
-                <DeveloperLink mod={mod} className="text-primary" onClick={onClose} />
+                <span className="inline-flex items-center gap-1.5 align-middle">
+                  <DeveloperAvatar mod={mod} size="md" />
+                  <DeveloperLink mod={mod} className="text-primary" onClick={onClose} />
+                </span>
               </li>
             )}
             {mod.version && (
