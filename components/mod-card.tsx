@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Download, ExternalLink, Info, Calendar, Hash, MessageSquare } from "lucide-react"
-import { proxyImage, safeExternalUrl } from "@/lib/image-proxy"
+import { ExternalLink, Info, Calendar, Hash, MessageSquare } from "lucide-react"
+import { proxyImage } from "@/lib/image-proxy"
+import { DownloadButton } from "@/components/download-button"
 import { discordRemarkPlugins, preprocessDiscordMarkdown } from "@/lib/discord-markdown"
 import { formatDate, getAvatarUrl, getDeveloperHref, getDiscordMessageUrl, normalizeMods, type Mod } from "@/lib/mods"
 
@@ -245,8 +246,6 @@ export const ModCard = memo(function ModCard({
   // Above-the-fold cards load their thumbnail immediately
   eager?: boolean
 }) {
-  const downloadUrl = safeExternalUrl(mod.download)
-
   // content-visibility lets the browser skip style/layout for off-screen cards (opening a dialog restyles the page)
   return (
     <Card className="group hover:border-primary/50 transition-all duration-200 overflow-hidden flex flex-col [content-visibility:auto] [contain-intrinsic-size:auto_420px]">
@@ -302,14 +301,7 @@ export const ModCard = memo(function ModCard({
         </div>
 
         <div className="flex gap-2">
-          {downloadUrl && (
-            <Button className="flex-1" asChild>
-              <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
-                <Download className="mr-2 h-4 w-4" />
-                다운로드
-              </a>
-            </Button>
-          )}
+          <DownloadButton url={mod.download} className="flex-1" />
 
           <Button variant="outline" className="flex-1 bg-transparent" onClick={() => onOpen(mod)}>
             <Info className="mr-2 h-4 w-4" />
@@ -323,7 +315,6 @@ export const ModCard = memo(function ModCard({
 
 function ModDetailContent({ mod, onClose }: { mod: Mod; onClose: () => void }) {
   const discordUrl = getDiscordMessageUrl(mod)
-  const downloadUrl = safeExternalUrl(mod.download)
   const description = useMemo(
     () => (mod.description ? preprocessDiscordMarkdown(mod.description) : ""),
     [mod.description],
@@ -395,15 +386,7 @@ function ModDetailContent({ mod, onClose }: { mod: Mod; onClose: () => void }) {
             </a>
           </Button>
         )}
-        {downloadUrl && (
-          <Button asChild>
-            <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
-              <Download className="mr-2 h-4 w-4" />
-              다운로드
-              <ExternalLink className="ml-2 h-3 w-3" />
-            </a>
-          </Button>
-        )}
+        <DownloadButton url={mod.download} external />
       </DialogFooter>
     </DialogContent>
   )
