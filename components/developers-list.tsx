@@ -56,7 +56,7 @@ export default function DevelopersList({ initialMods }: { initialMods?: Mod[] })
           />
         </div>
         <Select value={sortBy} onValueChange={(value) => setSortBy(value as DeveloperSort)}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger aria-label={t("list.sort")} className="w-[180px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

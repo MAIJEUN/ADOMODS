@@ -1,24 +1,21 @@
 "use client"
 
-import { useState, useMemo, useEffect, useLayoutEffect, useCallback, useRef, type ReactNode } from "react"
+import { useState, useMemo, useEffect, useLayoutEffect, useCallback, useRef } from "react"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Search, Loader2, Filter, X, Sparkles } from "lucide-react"
+import { Loader2, Sparkles } from "lucide-react"
 import { safeExternalUrl } from "@/lib/image-proxy"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { useFavorites } from "@/lib/favorites"
 import { matchesQuery, toChosungKey } from "@/lib/hangul"
+import { countActiveFilters, ModFilters, SORT_TYPES, type FilterState, type SortType } from "@/components/mod-filters"
 import {
   getDeveloperId,
   getDevelopers,
   getModHref,
   getModId,
   isUploadedWithin,
+  NEW_MOD_DAYS,
   RECENT_MOD_DAYS,
   type Mod,
 } from "@/lib/mods"
@@ -36,16 +33,6 @@ const formatShortDate = (timestamp: number | undefined, locale: string) =>
 // Leading emoji like <:name:id> shouldn't decide the alphabetical order
 const sortName = (mod: Mod) => stripDiscordEmoji(mod.name || "")
 
-const SORT_TYPES = ["newest", "oldest", "name-asc", "name-desc"] as const
-type SortType = (typeof SORT_TYPES)[number]
-
-interface FilterState {
-  // Developer IDs (see getDeveloperId)
-  developers?: string[]
-  hasDownload?: boolean
-  favoritesOnly?: boolean
-}
-
 // Cards are rendered in pages as the user scrolls; rendering hundreds of markdown cards at once is slow
 const PAGE_SIZE = 24
 // Above-the-fold cards whose thumbnails load eagerly
@@ -62,7 +49,7 @@ const savedState = {
   scrollY: 0,
 }
 
-// ?q=...&sort=...&dev=<id>&dev=<id>&dl=1&fav=1 — shareable and survives reloads
+// ?q=...&sort=...&dev=<id>&dev=<id>&dl=1&fav=1&new=1 — shareable and survives reloads
 const parseQuery = (search: string) => {
   const params = new URLSearchParams(search)
   const sort = params.get("sort")
@@ -74,6 +61,7 @@ const parseQuery = (search: string) => {
       developers: developers.length > 0 ? developers : undefined,
       hasDownload: params.get("dl") === "1" || undefined,
       favoritesOnly: params.get("fav") === "1" || undefined,
+      newOnly: params.get("new") === "1" || undefined,
     } satisfies FilterState,
   }
 }
@@ -85,6 +73,7 @@ const buildQuery = (searchQuery: string, sortBy: SortType, filters: FilterState)
   for (const id of filters.developers ?? []) params.append("dev", id)
   if (filters.hasDownload) params.set("dl", "1")
   if (filters.favoritesOnly) params.set("fav", "1")
+  if (filters.newOnly) params.set("new", "1")
   const query = params.toString()
   return query ? `?${query}` : ""
 }
@@ -143,24 +132,12 @@ function RecentMods({ mods, onOpen }: { mods: Mod[]; onOpen: (mod: Mod) => void 
   )
 }
 
-function FilterChip({ label, onRemove, removeLabel }: { label: ReactNode; onRemove: () => void; removeLabel: string }) {
-  return (
-    <Badge variant="secondary" className="gap-1">
-      {label}
-      <button type="button" aria-label={removeLabel} onClick={onRemove} className="ml-1 hover:bg-muted rounded-full">
-        <X className="h-3 w-3" />
-      </button>
-    </Badge>
-  )
-}
-
 export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
   const { t } = useT()
   const [searchQuery, setSearchQuery] = useState(savedState.searchQuery)
   const [debouncedSearch, setDebouncedSearch] = useState(savedState.searchQuery)
   const [sortBy, setSortBy] = useState<SortType>(savedState.sortBy)
   const [filters, setFilters] = useState<FilterState>(savedState.filters)
-  const [developerSearch, setDeveloperSearch] = useState("")
   // Becomes true once the URL query has been read, so the URL isn't overwritten before that
   const [urlReady, setUrlReady] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -228,13 +205,6 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
     () => getDevelopers(modsArray).sort((a, b) => a.name.localeCompare(b.name, "ko")),
     [modsArray],
   )
-  const developerNames = useMemo(() => new Map(developers.map((dev) => [dev.id, dev.name])), [developers])
-
-  const filteredDevelopers = useMemo(() => {
-    const query = developerSearch.trim().toLowerCase()
-    if (!query) return developers
-    return developers.filter((dev) => matchesQuery(dev.name.toLowerCase(), toChosungKey(dev.name), query))
-  }, [developers, developerSearch])
 
   const filteredAndSortedMods = useMemo(() => {
     const query = debouncedSearch.trim().toLowerCase()
@@ -244,6 +214,7 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
         if (filters.developers?.length && !filters.developers.includes(getDeveloperId(mod) ?? "")) return false
         if (filters.hasDownload && !safeExternalUrl(mod.download)) return false
         if (filters.favoritesOnly && !favorites.has(getModId(mod))) return false
+        if (filters.newOnly && !isUploadedWithin(mod, NEW_MOD_DAYS)) return false
         if (!query) return true
         const entry = searchIndex.get(mod)
         return !!entry && matchesQuery(entry.text, entry.chosung, query)
@@ -264,9 +235,7 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
       })
   }, [modsArray, searchIndex, filters, favorites, debouncedSearch, sortBy])
 
-  const activeFilterCount = [filters.developers?.length, filters.hasDownload, filters.favoritesOnly].filter(
-    Boolean,
-  ).length
+  const activeFilterCount = countActiveFilters(filters)
   const isFiltering = activeFilterCount > 0 || debouncedSearch.trim() !== ""
 
   // Shown above the list only when browsing without a search or filters
@@ -301,175 +270,20 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
     }
   }, [])
 
-  const toggleDeveloper = (developer: string) => {
-    setFilters((prev) => {
-      const current = prev.developers || []
-      if (current.includes(developer)) {
-        const updated = current.filter((d) => d !== developer)
-        return { ...prev, developers: updated.length > 0 ? updated : undefined }
-      } else {
-        return { ...prev, developers: [...current, developer] }
-      }
-    })
-  }
-
   return (
     <div className="space-y-6">
-      {/* Search Bar and Sort Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <div className="relative flex-1 w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            ref={searchInputRef}
-            type="search"
-            placeholder={t("list.search")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="gap-2 bg-transparent">
-                <Filter className="h-4 w-4" />
-                {t("list.filter")}
-                {activeFilterCount > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center rounded-full">
-                    {activeFilterCount}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80" align="end">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">{t("list.filter")}</h4>
-                  {activeFilterCount > 0 && (
-                    <Button variant="ghost" size="sm" onClick={() => setFilters({})}>
-                      {t("list.clearAll")}
-                    </Button>
-                  )}
-                </div>
-
-                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                  <Checkbox
-                    checked={!!filters.favoritesOnly}
-                    onCheckedChange={(checked) =>
-                      setFilters((prev) => ({ ...prev, favoritesOnly: checked === true || undefined }))
-                    }
-                  />
-                  {t("list.favoritesOnly")}
-                </label>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    {t("list.developer")} {filters.developers?.length ? `(${filters.developers.length})` : ""}
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder={t("list.developerSearch")}
-                    value={developerSearch}
-                    onChange={(e) => setDeveloperSearch(e.target.value)}
-                    className="mb-2"
-                  />
-                  <div className="max-h-[200px] overflow-y-auto space-y-2 border rounded-md p-2">
-                    {filteredDevelopers.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-2">{t("list.noResults")}</p>
-                    ) : (
-                      filteredDevelopers.map((dev) => (
-                        <div key={dev.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`dev-${dev.id}`}
-                            checked={filters.developers?.includes(dev.id) || false}
-                            onCheckedChange={() => toggleDeveloper(dev.id)}
-                          />
-                          <label
-                            htmlFor={`dev-${dev.id}`}
-                            className="flex flex-1 cursor-pointer items-center gap-2 text-sm font-normal leading-none"
-                          >
-                            <DeveloperAvatar mod={dev.avatarMod} />
-                            <span className="truncate">{dev.name}</span>
-                            <span className="ml-auto text-xs text-muted-foreground">{dev.modCount}</span>
-                          </label>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t("list.availability")}</label>
-                  <Select
-                    value={filters.hasDownload ? "yes" : "all"}
-                    onValueChange={(value) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        hasDownload: value === "yes" ? true : undefined,
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("list.showAll")}</SelectItem>
-                      <SelectItem value="yes">{t("list.downloadableOnly")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortType)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={t("list.sort")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">{t("sort.newest")}</SelectItem>
-              <SelectItem value="oldest">{t("sort.oldest")}</SelectItem>
-              <SelectItem value="name-asc">{t("sort.nameAsc")}</SelectItem>
-              <SelectItem value="name-desc">{t("sort.nameDesc")}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Badge variant="secondary" className="px-3 py-1">
-            {t("list.count", { n: filteredAndSortedMods.length })}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Active Filters Display */}
-      {activeFilterCount > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-muted-foreground">{t("list.activeFilters")}</span>
-          {filters.favoritesOnly && (
-            <FilterChip
-              label={t("list.favorites")}
-              removeLabel={t("list.removeFilter")}
-              onRemove={() => setFilters((prev) => ({ ...prev, favoritesOnly: undefined }))}
-            />
-          )}
-          {filters.developers && filters.developers.length > 0 && (
-            <FilterChip
-              label={t("list.developerFilter", {
-                names: filters.developers.map((id) => developerNames.get(id) ?? id).join(", "),
-              })}
-              removeLabel={t("list.removeFilter")}
-              onRemove={() => setFilters((prev) => ({ ...prev, developers: undefined }))}
-            />
-          )}
-          {filters.hasDownload && (
-            <FilterChip
-              label={t("list.downloadable")}
-              removeLabel={t("list.removeFilter")}
-              onRemove={() => setFilters((prev) => ({ ...prev, hasDownload: undefined }))}
-            />
-          )}
-        </div>
-      )}
+      <ModFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchInputRef={searchInputRef}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        filters={filters}
+        onFiltersChange={setFilters}
+        developers={developers}
+        resultCount={filteredAndSortedMods.length}
+        favoritesCount={favorites.size}
+      />
 
       {!isFiltering && !isLoading && !error && <RecentMods mods={recentMods} onOpen={openMod} />}
 
@@ -508,6 +322,21 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
                       ? t("list.noFavorites")
                       : t("list.tryOther")}
                 </CardDescription>
+                {isFiltering && (
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFilters({})
+                        setSearchQuery("")
+                        setDebouncedSearch("")
+                      }}
+                    >
+                      {t("list.resetFilters")}
+                    </Button>
+                  </div>
+                )}
               </CardHeader>
             </Card>
           ) : (
