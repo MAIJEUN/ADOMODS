@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useSyncExternalStore } from "react"
-import { localeOf, translate, type Lang, type TranslationKey } from "@/lib/i18n"
+import { LANGS, localeOf, translate, type Lang, type TranslationKey } from "@/lib/i18n"
 
 // Language lives in localStorage. Pages are rendered in Korean on the server and switch after hydration.
 const STORAGE_KEY = "adomods-lang"
@@ -12,11 +12,12 @@ const readLang = (): Lang => {
   if (current) return current
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored === "ko" || stored === "en") return (current = stored)
+    if (LANGS.includes(stored as Lang)) return (current = stored as Lang)
   } catch {
     // Storage blocked; fall back to the browser language
   }
-  current = navigator.language?.toLowerCase().startsWith("ko") ? "ko" : "en"
+  const browser = navigator.language?.toLowerCase() ?? ""
+  current = browser.startsWith("ko") ? "ko" : browser.startsWith("zh") ? "zh" : "en"
   return current
 }
 
@@ -27,7 +28,7 @@ export const setLang = (lang: Lang) => {
   } catch {
     // Not persisted; still applies for this page session
   }
-  document.documentElement.lang = lang
+  document.documentElement.lang = localeOf(lang)
   listeners.forEach((listener) => listener())
 }
 

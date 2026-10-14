@@ -1,9 +1,13 @@
-export type Lang = "ko" | "en"
+export type Lang = "ko" | "en" | "zh"
+
+export const LANGS: Lang[] = ["ko", "en", "zh"]
+// Each language named in itself, for the language picker
+export const LANG_NAMES: Record<Lang, string> = { ko: "한국어", en: "English", zh: "简体中文" }
 
 const ko = {
   "nav.mods": "모드",
   "nav.developers": "개발자",
-  "lang.switch": "English",
+  "lang.label": "언어",
   "common.loadError": "모드 데이터를 불러올 수 없습니다. API 연결을 확인해주세요.",
   "common.error": "오류 발생",
   "common.unknownDeveloper": "알 수 없는 개발자",
@@ -105,7 +109,7 @@ type Key = keyof typeof ko
 const en: Record<Key, string> = {
   "nav.mods": "Mods",
   "nav.developers": "Developers",
-  "lang.switch": "한국어",
+  "lang.label": "Language",
   "common.loadError": "Couldn't load mod data. Please check the API connection.",
   "common.error": "Error",
   "common.unknownDeveloper": "Unknown developer",
@@ -202,8 +206,108 @@ const en: Record<Key, string> = {
     "ADOMODS is an unofficial fan site. A Dance of Fire and Ice is a game by 7th Beat Games; each mod belongs to its creator.",
 }
 
+const zh: Record<Key, string> = {
+  "nav.mods": "模组",
+  "nav.developers": "开发者",
+  "lang.label": "语言",
+  "common.loadError": "无法加载模组数据，请检查 API 连接。",
+  "common.error": "出错了",
+  "common.unknownDeveloper": "未知开发者",
+  "common.unknownDate": "未知",
+  "common.allMods": "全部模组",
+  "common.developerList": "开发者列表",
+  "common.back": "返回",
+  "common.scrollTop": "回到顶部",
+  "common.scrollLeft": "向左滚动",
+  "common.scrollRight": "向右滚动",
+  "list.search": "搜索模组…（按 / 键快速定位）",
+  "list.filter": "筛选",
+  "list.clearAll": "全部清除",
+  "list.developer": "开发者",
+  "list.developerSearch": "搜索开发者…",
+  "list.noResults": "没有搜索结果",
+  "list.availability": "可下载状态",
+  "list.showAll": "全部显示",
+  "list.downloadableOnly": "仅显示可下载的模组",
+  "list.favoritesOnly": "仅显示收藏",
+  "list.sort": "排序方式",
+  "sort.newest": "最新",
+  "sort.oldest": "最早",
+  "sort.nameAsc": "名称（A-Z）",
+  "sort.nameDesc": "名称（Z-A）",
+  "list.count": "{n} 个模组",
+  "list.activeFilters": "当前筛选：",
+  "list.developerFilter": "开发者：{names}",
+  "list.downloadable": "可下载",
+  "list.favorites": "收藏",
+  "list.removeFilter": "移除筛选",
+  "list.noData": "没有模组数据",
+  "list.noDataHint": "无法从 API 获取数据。",
+  "list.tryOther": "请尝试其他关键词。",
+  "list.noFavorites": "还没有收藏。点击卡片上的 ☆ 按钮即可收藏。",
+  "list.recent": "最近上传",
+  "card.new": "NEW",
+  "card.version": "版本：{v}",
+  "card.details": "详情",
+  "card.favorite": "加入收藏",
+  "card.unfavorite": "取消收藏",
+  "detail.subtitle": "模组详情",
+  "detail.description": "简介",
+  "detail.info": "基本信息",
+  "detail.author": "作者：",
+  "detail.version": "版本：",
+  "detail.uploaded": "上传日期：",
+  "detail.referenceImage": "📷 参考图片",
+  "detail.imageAlt": "图片",
+  "detail.imageError": "图片加载失败。",
+  "detail.discord": "前往 Discord 消息",
+  "detail.copyLink": "复制链接",
+  "detail.copied": "已复制",
+  "detail.notFound": "找不到该模组",
+  "detail.notFoundHint": "模组可能已被删除，或链接有误。",
+  "download.button": "下载",
+  "download.pick": "选择要下载的文件",
+  "download.pickHint": "请选择文件",
+  "download.notFound": "未找到文件",
+  "download.notFoundHint": "请前往原页面下载。",
+  "download.openSource": "打开原页面",
+  "download.failed": "无法获取文件信息。",
+  "download.noAssets": "该版本没有附带文件。",
+  "download.noReleases": "该仓库没有发布版本。",
+  "download.emptyFolder": "文件夹中没有找到文件。",
+  "download.noLink": "未找到下载链接。",
+  "download.prerelease": "预发布",
+  "dev.notFound": "找不到该开发者",
+  "dev.notFoundHint": "该开发者没有上传模组，或链接有误。",
+  "dev.modCount": "{n} 个模组",
+  "dev.discordProfile": "Discord 主页",
+  "dev.mods": "模组",
+  "devs.title": "开发者",
+  "devs.count": "{n} 位开发者",
+  "devs.search": "搜索开发者…",
+  "devs.sortMods": "模组数量",
+  "devs.sortRecent": "最近活跃",
+  "devs.sortName": "名称",
+  "devs.latest": "最近上传 {date}",
+  "md.user": "@用户",
+  "md.role": "@身份组",
+  "md.channel": "#频道",
+  "md.spoiler": "显示剧透",
+  "footer.about": "一站式浏览冰与火之舞（A Dance of Fire and Ice）模组。",
+  "footer.tab": "信息",
+  "footer.contact": "联系方式",
+  "footer.discord": "开发者 Discord",
+  "footer.copyHandle": "复制 Discord 用户名",
+  "footer.contactHint": "网站问题反馈或模组信息更正，请通过 Discord 联系。",
+  "footer.links": "相关链接",
+  "footer.source": "网站源代码（GitHub）",
+  "footer.data": "模组数据来源（bot.adofai.gg）",
+  "footer.disclaimer":
+    "ADOMODS 是非官方粉丝网站。冰与火之舞（A Dance of Fire and Ice）是 7th Beat Games 的游戏，各模组的权利归其作者所有。",
+}
+
 export type TranslationKey = Key
-export const dictionaries: Record<Lang, Record<Key, string>> = { ko, en }
+export const dictionaries: Record<Lang, Record<Key, string>> = { ko, en, zh }
 
 export const translate = (lang: Lang, key: Key, vars?: Record<string, string | number>) => {
   let text = dictionaries[lang][key]
@@ -211,4 +315,5 @@ export const translate = (lang: Lang, key: Key, vars?: Record<string, string | n
   return text
 }
 
-export const localeOf = (lang: Lang) => (lang === "ko" ? "ko-KR" : "en-US")
+const LOCALES: Record<Lang, string> = { ko: "ko-KR", en: "en-US", zh: "zh-CN" }
+export const localeOf = (lang: Lang) => LOCALES[lang]

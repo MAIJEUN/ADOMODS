@@ -58,7 +58,7 @@ export const normalizeMods = (data: unknown): Mod[] => {
 }
 
 export const formatDate = (timestamp?: number, locale = "ko-KR") => {
-  if (!timestamp) return locale.startsWith("ko") ? "알 수 없음" : "Unknown"
+  if (!timestamp) return locale.startsWith("ko") ? "알 수 없음" : locale.startsWith("zh") ? "未知" : "Unknown"
   return new Date(timestamp).toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
