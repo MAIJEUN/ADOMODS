@@ -9,12 +9,11 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Search, Loader2, Filter, X, Sparkles } from "lucide-react"
-import { safeExternalUrl, proxyImage } from "@/lib/image-proxy"
+import { safeExternalUrl } from "@/lib/image-proxy"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { useFavorites } from "@/lib/favorites"
 import { matchesQuery, toChosungKey } from "@/lib/hangul"
 import {
-  formatDate,
   getDeveloperId,
   getDevelopers,
   getModHref,
@@ -28,6 +27,10 @@ import { isPlainClick, ModCard, useMods } from "@/components/mod-card"
 import { useModDialog } from "@/components/mod-detail"
 import { DeveloperAvatar } from "@/components/developer"
 import { DiscordText } from "@/components/mod-markdown"
+
+// "10/14" style date for the compact recent row
+const formatShortDate = (timestamp: number | undefined, locale: string) =>
+  timestamp ? new Date(timestamp).toLocaleDateString(locale, { month: "numeric", day: "numeric" }) : ""
 
 // Leading emoji like <:name:id> shouldn't decide the alphabetical order
 const sortName = (mod: Mod) => stripDiscordEmoji(mod.name || "")
@@ -112,7 +115,7 @@ function RecentMods({ mods, onOpen }: { mods: Mod[]; onOpen: (mod: Mod) => void 
         <Sparkles className="h-4 w-4 text-primary" />
         {t("list.recent")}
       </h2>
-      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2">
         {mods.map((mod) => (
           <a
             key={getModId(mod)}
@@ -122,33 +125,16 @@ function RecentMods({ mods, onOpen }: { mods: Mod[]; onOpen: (mod: Mod) => void 
               e.preventDefault()
               onOpen(mod)
             }}
-            className="group flex w-56 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-primary/50"
+            className="flex w-52 shrink-0 flex-col gap-1 rounded-lg border border-border bg-card px-3 py-2 transition-colors hover:border-primary/50"
           >
-            <div className="aspect-video w-full overflow-hidden bg-muted">
-              {mod.thumbnail ? (
-                <img
-                  src={proxyImage(mod.thumbnail)}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-muted-foreground/60">
-                  {sortName(mod).charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-            <div className="space-y-1 p-3">
-              <p className="line-clamp-1 text-sm font-semibold">
-                <DiscordText text={mod.name} />
-              </p>
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <DeveloperAvatar mod={mod} />
-                <span className="truncate">{mod.cachedUsername}</span>
-                <span className="ml-auto shrink-0">{formatDate(mod.uploadedTimestamp, locale)}</span>
-              </p>
-            </div>
+            <span className="truncate text-sm font-semibold">
+              <DiscordText text={mod.name} />
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <DeveloperAvatar mod={mod} />
+              <span className="truncate">{mod.cachedUsername}</span>
+              <span className="ml-auto shrink-0">{formatShortDate(mod.uploadedTimestamp, locale)}</span>
+            </span>
           </a>
         ))}
       </div>

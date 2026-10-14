@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Analytics } from "@vercel/analytics/next"
 import { SiteNav } from "@/components/site-nav"
 import { ScrollToTop } from "@/components/scroll-to-top"
+import { NavigationTracker } from "@/components/back-button"
 import "./globals.css"
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
@@ -38,6 +39,7 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${geist.variable} ${geistMono.variable}`}>
       <body className={`font-sans antialiased`}>
+        <NavigationTracker />
         <div className="min-h-screen bg-background">
           <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
             <div className="container mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:py-6">

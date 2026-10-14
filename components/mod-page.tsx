@@ -1,11 +1,10 @@
 "use client"
 
-import Link from "next/link"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { getModId, type Mod } from "@/lib/mods"
 import { useT } from "@/lib/use-lang"
+import { BackButton } from "@/components/back-button"
 import { useMods } from "@/components/mod-card"
 import { ModDetailActions, ModDetailBody } from "@/components/mod-detail"
 import { DiscordText } from "@/components/mod-markdown"
@@ -18,13 +17,7 @@ export default function ModPage({ modId, initialMods }: { modId: string; initial
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      {/* scroll={false}: the list restores its own scroll position */}
-      <Button variant="ghost" size="sm" asChild className="-ml-2">
-        <Link href="/" scroll={false}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t("common.allMods")}
-        </Link>
-      </Button>
+      <BackButton fallbackHref="/" fallbackLabel="common.allMods" />
 
       {isLoading && (
         <div className="flex items-center justify-center py-12">

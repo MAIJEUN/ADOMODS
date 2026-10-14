@@ -1,13 +1,13 @@
 "use client"
 
 import { useMemo } from "react"
-import Link from "next/link"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Calendar, ExternalLink, Loader2, Package } from "lucide-react"
+import { Calendar, ExternalLink, Loader2, Package } from "lucide-react"
 import { formatDate, getModId, isModOfDeveloper, type Mod } from "@/lib/mods"
 import { useT } from "@/lib/use-lang"
+import { BackButton } from "@/components/back-button"
 import { ModCard, useMods } from "@/components/mod-card"
 import { useModDialog } from "@/components/mod-detail"
 import { DeveloperAvatar } from "@/components/developer"
@@ -34,13 +34,7 @@ export default function DeveloperProfile({ developerId, initialMods }: { develop
 
   return (
     <div className="space-y-8">
-      {/* scroll={false}: the list restores its own scroll position */}
-      <Button variant="ghost" size="sm" asChild className="-ml-2">
-        <Link href="/" scroll={false}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t("common.allMods")}
-        </Link>
-      </Button>
+      <BackButton fallbackHref="/developers" fallbackLabel="common.developerList" />
 
       {isLoading && (
         <div className="flex items-center justify-center py-12">
