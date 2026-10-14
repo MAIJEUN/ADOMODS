@@ -85,6 +85,16 @@ const ko = {
   "md.role": "@역할",
   "md.channel": "#채널",
   "md.spoiler": "스포일러 보기",
+  "footer.about": "얼불춤(A Dance of Fire and Ice) 모드를 한눈에 찾아보는 사이트입니다.",
+  "footer.contact": "연락처",
+  "footer.discord": "개발자 디스코드",
+  "footer.copyHandle": "디스코드 아이디 복사",
+  "footer.contactHint": "사이트 오류 제보나 모드 정보 수정 요청은 디스코드로 연락해주세요.",
+  "footer.links": "정보",
+  "footer.source": "사이트 소스 코드 (GitHub)",
+  "footer.data": "모드 데이터 출처 (bot.adofai.gg)",
+  "footer.disclaimer":
+    "ADOMODS는 비공식 팬 사이트입니다. A Dance of Fire and Ice는 7th Beat Games의 게임이며, 각 모드의 권리는 제작자에게 있습니다.",
 }
 
 type Key = keyof typeof ko
@@ -174,6 +184,16 @@ const en: Record<Key, string> = {
   "md.role": "@role",
   "md.channel": "#channel",
   "md.spoiler": "Show spoiler",
+  "footer.about": "Browse A Dance of Fire and Ice mods at a glance.",
+  "footer.contact": "Contact",
+  "footer.discord": "Developer on Discord",
+  "footer.copyHandle": "Copy Discord username",
+  "footer.contactHint": "For bug reports or mod info corrections, reach out on Discord.",
+  "footer.links": "Links",
+  "footer.source": "Site source code (GitHub)",
+  "footer.data": "Mod data source (bot.adofai.gg)",
+  "footer.disclaimer":
+    "ADOMODS is an unofficial fan site. A Dance of Fire and Ice is a game by 7th Beat Games; each mod belongs to its creator.",
 }
 
 export type TranslationKey = Key

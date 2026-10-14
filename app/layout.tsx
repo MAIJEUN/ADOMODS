@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Analytics } from "@vercel/analytics/next"
 import { SiteNav } from "@/components/site-nav"
 import { ScrollToTop } from "@/components/scroll-to-top"
+import { SiteFooter } from "@/components/site-footer"
 import { NavigationTracker } from "@/components/back-button"
 import "./globals.css"
 
@@ -64,21 +65,7 @@ export default function RootLayout({
 
           <main className="container mx-auto px-4 py-8">{children}</main>
 
-          <footer className="border-t border-border mt-16">
-            <div className="container mx-auto px-4 py-6">
-              <p className="text-center text-sm text-muted-foreground">
-                Data from{" "}
-                <a
-                  href="https://bot.adofai.gg/api/mods/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  bot.adofai.gg
-                </a>
-              </p>
-            </div>
-          </footer>
+          <SiteFooter />
         </div>
         <ScrollToTop />
         <Analytics />
