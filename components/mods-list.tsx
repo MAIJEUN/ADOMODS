@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, type ReactNode } from "react"
 import useSWR from "swr"
 import ReactMarkdown, { type Components } from "react-markdown"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,6 +25,7 @@ import {
   MessageSquare,
 } from "lucide-react"
 import { proxyImage, safeExternalUrl } from "@/lib/image-proxy"
+import { discordRemarkPlugins, preprocessDiscordMarkdown } from "@/lib/discord-markdown"
 
 interface Mod {
   _id?: string
@@ -78,7 +79,7 @@ const generateModMarkdown = (mod: Mod) => {
   sections.push(`# ${mod.name}\n`)
 
   if (mod.description) {
-    sections.push(`## 설명\n${mod.description}\n`)
+    sections.push(`## 설명\n${preprocessDiscordMarkdown(mod.description)}\n`)
   }
 
   sections.push(`## 기본 정보`)
@@ -127,19 +128,93 @@ function ImageWithFallback({ src, alt, className }: { src?: string; alt: string;
   )
 }
 
-// Compact rendering for the card preview (inside a 2-line clamp)
+function Spoiler({ children }: { children?: ReactNode }) {
+  const [revealed, setRevealed] = useState(false)
+
+  if (revealed) return <span className="rounded bg-muted px-0.5">{children}</span>
+
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      aria-label="스포일러 보기"
+      className="cursor-pointer select-none rounded bg-muted-foreground px-0.5 text-transparent [&_*]:invisible"
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setRevealed(true)
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          setRevealed(true)
+        }
+      }}
+    >
+      {children}
+    </span>
+  )
+}
+
+// Discord-only elements produced by lib/discord-markdown
+const discordComponents: Components = {
+  span: ({ node, className, children, ...props }) =>
+    className?.includes("discord-spoiler") ? (
+      <Spoiler>{children}</Spoiler>
+    ) : (
+      <span className={className} {...props}>
+        {children}
+      </span>
+    ),
+  blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-border pl-3 my-1" {...props} />,
+  hr: () => <hr className="my-3 border-border" />,
+}
+
+const renderEmoji = (src: unknown, alt?: string) => (
+  <img
+    src={proxyImage(typeof src === "string" ? src : undefined)}
+    alt={alt}
+    title={alt}
+    loading="lazy"
+    className="inline-block h-[1.375em] w-auto align-text-bottom"
+  />
+)
+
+// Compact rendering for the card preview (inside a 2-line clamp); blocks become inline spans
 const previewMarkdownComponents: Components = {
-  p: ({ node, ...props }) => <span {...props} />,
+  ...discordComponents,
+  p: ({ node, ...props }) => (
+    <>
+      <span {...props} />{" "}
+    </>
+  ),
+  h1: ({ node, ...props }) => (
+    <>
+      <span className="font-semibold" {...props} />{" "}
+    </>
+  ),
+  h2: ({ node, ...props }) => (
+    <>
+      <span className="font-semibold" {...props} />{" "}
+    </>
+  ),
+  h3: ({ node, ...props }) => (
+    <>
+      <span className="font-semibold" {...props} />{" "}
+    </>
+  ),
   strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
   em: ({ node, ...props }) => <em {...props} />,
   code: ({ node, ...props }) => <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props} />,
-  // Images would break the line clamp; they are shown in the detail dialog instead
-  img: () => null,
+  // Images would break the line clamp; they are shown in the detail dialog instead (custom emoji stay)
+  img: ({ node, className, src, alt }) => (className?.includes("discord-emoji") ? renderEmoji(src, alt) : null),
 }
 
 const detailMarkdownComponents: Components = {
+  ...discordComponents,
   h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-4 mb-2" {...props} />,
   h2: ({ node, ...props }) => <h2 className="text-xl font-bold mt-3 mb-2" {...props} />,
+  h3: ({ node, ...props }) => <h3 className="text-lg font-bold mt-3 mb-1" {...props} />,
   p: ({ node, ...props }) => <p className="mb-2 break-words" {...props} />,
   ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />,
   ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-2 space-y-1" {...props} />,
@@ -156,13 +231,16 @@ const detailMarkdownComponents: Components = {
   a: ({ node, ...props }) => (
     <a className="text-primary hover:underline break-all" target="_blank" rel="noopener noreferrer" {...props} />
   ),
-  img: ({ node, src, alt }) => (
-    <ImageWithFallback
-      src={typeof src === "string" ? src : undefined}
-      alt={alt || "이미지"}
-      className="max-w-full h-auto rounded-lg border border-border shadow-sm"
-    />
-  ),
+  img: ({ node, className, src, alt }) =>
+    className?.includes("discord-emoji") ? (
+      renderEmoji(src, alt)
+    ) : (
+      <ImageWithFallback
+        src={typeof src === "string" ? src : undefined}
+        alt={alt || "이미지"}
+        className="max-w-full h-auto rounded-lg border border-border shadow-sm"
+      />
+    ),
 }
 
 export default function ModsList() {
@@ -473,7 +551,9 @@ export default function ModsList() {
                       </div>
                       {mod.description && (
                         <CardDescription className="line-clamp-2">
-                          <ReactMarkdown components={previewMarkdownComponents}>{mod.description}</ReactMarkdown>
+                          <ReactMarkdown components={previewMarkdownComponents} remarkPlugins={discordRemarkPlugins}>
+                            {preprocessDiscordMarkdown(mod.description)}
+                          </ReactMarkdown>
                         </CardDescription>
                       )}
                     </CardHeader>
@@ -545,7 +625,9 @@ function ModDetail({ mod }: { mod: Mod }) {
 
       <div className="flex-1 overflow-y-auto pr-2">
         <div className="max-w-none [&>*]:break-words">
-          <ReactMarkdown components={detailMarkdownComponents}>{generateModMarkdown(mod)}</ReactMarkdown>
+          <ReactMarkdown components={detailMarkdownComponents} remarkPlugins={discordRemarkPlugins}>
+            {generateModMarkdown(mod)}
+          </ReactMarkdown>
 
           {mod.imageURL && (
             <div className="mt-6 pt-6 border-t border-border">
