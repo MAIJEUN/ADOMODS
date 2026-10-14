@@ -42,47 +42,58 @@ function DiscordContact() {
 
 const linkClass = "inline-flex items-center gap-1.5 text-foreground hover:text-primary hover:underline"
 
+// About / contact / links columns; used by the page footer and the bottom info panel
+export function FooterSections({ className }: { className?: string }) {
+  const { t } = useT()
+
+  return (
+    <div className={`grid gap-8 text-sm sm:grid-cols-3 ${className ?? ""}`}>
+      <div className="space-y-2">
+        <p className="font-semibold">
+          <span className="text-primary">ADO</span>MODS
+        </p>
+        <p className="text-muted-foreground">{t("footer.about")}</p>
+      </div>
+
+      <div className="space-y-2">
+        <p className="font-semibold">{t("footer.contact")}</p>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
+          <MessageCircle className="h-4 w-4" />
+          {t("footer.discord")}
+          <DiscordContact />
+        </p>
+        <p className="text-muted-foreground">{t("footer.contactHint")}</p>
+      </div>
+
+      <div className="space-y-2">
+        <p className="font-semibold">{t("footer.links")}</p>
+        <ul className="space-y-1.5">
+          <li>
+            <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
+              <Github className="h-4 w-4" />
+              {t("footer.source")}
+            </a>
+          </li>
+          <li>
+            <a href={DATA_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
+              <Database className="h-4 w-4" />
+              {t("footer.data")}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+export const SITE_FOOTER_ID = "site-footer"
+
 export function SiteFooter() {
   const { t } = useT()
 
   return (
-    <footer className="border-t border-border mt-16">
-      <div className="container mx-auto grid gap-8 px-4 py-10 text-sm sm:grid-cols-3">
-        <div className="space-y-2">
-          <p className="font-semibold">
-            <span className="text-primary">ADO</span>MODS
-          </p>
-          <p className="text-muted-foreground">{t("footer.about")}</p>
-        </div>
-
-        <div className="space-y-2">
-          <p className="font-semibold">{t("footer.contact")}</p>
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground">
-            <MessageCircle className="h-4 w-4" />
-            {t("footer.discord")}
-            <DiscordContact />
-          </p>
-          <p className="text-muted-foreground">{t("footer.contactHint")}</p>
-        </div>
-
-        <div className="space-y-2">
-          <p className="font-semibold">{t("footer.links")}</p>
-          <ul className="space-y-1.5">
-            <li>
-              <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                <Github className="h-4 w-4" />
-                {t("footer.source")}
-              </a>
-            </li>
-            <li>
-              <a href={DATA_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                <Database className="h-4 w-4" />
-                {t("footer.data")}
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
+    <footer id={SITE_FOOTER_ID} className="border-t border-border mt-16">
+      <FooterSections className="container mx-auto px-4 py-10" />
 
       <div className="border-t border-border">
         {/* Extra bottom space on phones so the back-to-top button doesn't cover the text */}

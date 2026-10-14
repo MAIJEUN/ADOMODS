@@ -7,6 +7,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { SiteNav } from "@/components/site-nav"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { SiteFooter } from "@/components/site-footer"
+import { InfoTab } from "@/components/info-tab"
 import { NavigationTracker } from "@/components/back-button"
 import "./globals.css"
 
@@ -67,6 +68,7 @@ export default function RootLayout({
 
           <SiteFooter />
         </div>
+        <InfoTab />
         <ScrollToTop />
         <Analytics />
       </body>
