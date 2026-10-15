@@ -56,6 +56,7 @@ export function ModDetailBody({ mod }: { mod: Mod }) {
             <ImageWithFallback
               src={mod.imageURL}
               alt={stripDiscordEmoji(mod.name)}
+              fallbackHref={getDiscordMessageUrl(mod)}
               className="max-w-full h-auto rounded-lg border border-border shadow-sm"
             />
           </div>

@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { proxyImage } from "@/lib/image-proxy"
 import { getAvatarUrl, getDeveloperHref, type Mod } from "@/lib/mods"
 import { useT } from "@/lib/use-lang"
+import { useImageFallback } from "@/components/use-image-fallback"
 
 const AVATAR_SIZES = {
   sm: "h-5 w-5 text-[10px]",
@@ -13,7 +13,7 @@ const AVATAR_SIZES = {
 }
 
 export function DeveloperAvatar({ mod, size = "sm" }: { mod: Mod; size?: keyof typeof AVATAR_SIZES }) {
-  const [failed, setFailed] = useState(false)
+  const { failed, ref, onError } = useImageFallback()
   const src = getAvatarUrl(mod)
   const name = mod.cachedUsername || "?"
   const sizeClass = AVATAR_SIZES[size]
@@ -36,7 +36,8 @@ export function DeveloperAvatar({ mod, size = "sm" }: { mod: Mod; size?: keyof t
       loading="lazy"
       decoding="async"
       className={`${sizeClass} shrink-0 rounded-full border border-border object-cover bg-muted`}
-      onError={() => setFailed(true)}
+      ref={ref}
+      onError={onError}
     />
   )
 }

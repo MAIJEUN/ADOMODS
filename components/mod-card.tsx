@@ -22,6 +22,7 @@ import { useT } from "@/lib/use-lang"
 import { DownloadButton } from "@/components/download-button"
 import { DeveloperAvatar, DeveloperLink } from "@/components/developer"
 import { DescriptionPreview, DiscordText } from "@/components/mod-markdown"
+import { useImageFallback } from "@/components/use-image-fallback"
 
 const fetcher = async (url: string) => {
   const res = await fetch(url)
@@ -83,6 +84,8 @@ export const ModCard = memo(function ModCard({
 }) {
   const { t, locale } = useT()
   const isNew = isUploadedWithin(mod, NEW_MOD_DAYS)
+  // Expired/deleted thumbnails are dropped instead of showing a broken image
+  const thumbnail = useImageFallback()
 
   // The whole card opens the details, except its own links and buttons
   const handleCardClick = (e: MouseEvent<HTMLDivElement>) => {
@@ -96,7 +99,7 @@ export const ModCard = memo(function ModCard({
       onClick={handleCardClick}
       className="group cursor-pointer hover:border-primary/50 transition-all duration-200 overflow-hidden flex flex-col [content-visibility:auto] [contain-intrinsic-size:auto_420px]"
     >
-      {mod.thumbnail && (
+      {mod.thumbnail && !thumbnail.failed && (
         <div className="aspect-video w-full bg-muted relative overflow-hidden">
           <img
             src={proxyImage(mod.thumbnail)}
@@ -104,6 +107,8 @@ export const ModCard = memo(function ModCard({
             loading={eager ? "eager" : "lazy"}
             fetchPriority={eager ? "high" : undefined}
             decoding="async"
+            ref={thumbnail.ref}
+            onError={thumbnail.onError}
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
           />
         </div>

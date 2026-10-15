@@ -10,13 +10,37 @@ import {
   preprocessDiscordMarkdown,
 } from "@/lib/discord-markdown"
 import { useT } from "@/lib/use-lang"
+import { useImageFallback } from "@/components/use-image-fallback"
 
-export function ImageWithFallback({ src, alt, className }: { src?: string; alt: string; className?: string }) {
-  const [failed, setFailed] = useState(false)
+export function ImageWithFallback({
+  src,
+  alt,
+  className,
+  fallbackHref,
+}: {
+  src?: string
+  alt: string
+  className?: string
+  // Where the image can still be seen (e.g. the Discord message) when it can't be loaded here
+  fallbackHref?: string | null
+}) {
+  const { failed, ref, onError } = useImageFallback()
   const { t } = useT()
 
   if (failed) {
-    return <span className="block text-sm text-muted-foreground">{t("detail.imageError")}</span>
+    return (
+      <span className="block text-sm text-muted-foreground">
+        {t("detail.imageError")}
+        {fallbackHref && (
+          <>
+            {" "}
+            <a href={fallbackHref} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              {t("detail.viewOnDiscord")}
+            </a>
+          </>
+        )}
+      </span>
+    )
   }
 
   return (
@@ -26,7 +50,8 @@ export function ImageWithFallback({ src, alt, className }: { src?: string; alt: 
       loading="lazy"
       decoding="async"
       className={className}
-      onError={() => setFailed(true)}
+      ref={ref}
+      onError={onError}
     />
   )
 }
@@ -76,7 +101,7 @@ const discordComponents: Components = {
 
 // Custom Discord emoji; shows :name: as text if the image can't be loaded (deleted emoji, bad ID)
 function DiscordEmoji({ src, name }: { src?: string; name?: string }) {
-  const [failed, setFailed] = useState(false)
+  const { failed, ref, onError } = useImageFallback()
   if (failed || !src) return <span className="text-muted-foreground">{name}</span>
   return (
     <img
@@ -86,7 +111,8 @@ function DiscordEmoji({ src, name }: { src?: string; name?: string }) {
       loading="lazy"
       decoding="async"
       className="inline-block h-[1.2em] w-auto align-[-0.2em]"
-      onError={() => setFailed(true)}
+      ref={ref}
+      onError={onError}
     />
   )
 }

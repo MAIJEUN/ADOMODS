@@ -1,7 +1,23 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { isProxyableImageUrl } from "@/lib/image-proxy"
+import {
+  canRefreshDiscordUrls,
+  isDiscordAttachmentUrl,
+  isDiscordUrlExpired,
+  refreshDiscordUrl,
+} from "@/lib/discord-cdn"
 
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024
+
+const fetchImage = (url: URL) =>
+  fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    },
+    // A redirect could point outside the allowlist
+    redirect: "error",
+    signal: AbortSignal.timeout(10_000),
+  })
 
 export async function GET(request: NextRequest) {
   const imageUrl = request.nextUrl.searchParams.get("url")
@@ -22,17 +38,25 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(target, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      },
-      // A redirect could point outside the allowlist
-      redirect: "error",
-      signal: AbortSignal.timeout(10_000),
-    })
+    // Stored Discord attachment links are usually expired; re-sign them first when we can
+    const refreshable = isDiscordAttachmentUrl(target) && canRefreshDiscordUrls()
+    // At most one refresh call per request, even if Discord rejects it
+    let triedRefresh = false
+    if (refreshable && isDiscordUrlExpired(target)) {
+      triedRefresh = true
+      const fresh = await refreshDiscordUrl(target)
+      if (fresh) target = fresh
+    }
+
+    let response = await fetchImage(target)
+    // Expired despite the ex= check (clock skew, revoked signature): refresh once and retry
+    if ((response.status === 404 || response.status === 403) && refreshable && !triedRefresh) {
+      const fresh = await refreshDiscordUrl(target)
+      if (fresh) response = await fetchImage(fresh)
+    }
 
     if (!response.ok || !response.body) {
-      // Discord attachment URLs are signed and expire (ex= param), which shows up here as 404
+      // 404 here is typically an expired Discord link without DISCORD_BOT_TOKEN, or a deleted attachment
       return new NextResponse("Failed to fetch image", { status: response.status === 404 ? 404 : 502 })
     }
 
