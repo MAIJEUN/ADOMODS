@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import Image from "next/image"
 import Link from "next/link"
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { SiteNav } from "@/components/site-nav"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { SiteFooter } from "@/components/site-footer"
@@ -71,6 +72,7 @@ export default function RootLayout({
         <InfoTab />
         <ScrollToTop />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
