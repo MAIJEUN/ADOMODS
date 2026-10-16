@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Check, ExternalLink, Link2, MessageSquare } from "lucide-react"
+import { Check, ExternalLink, Github, Link2, MessageSquare } from "lucide-react"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { formatDate, getDiscordMessageUrl, getModHref, getModId, type Mod } from "@/lib/mods"
+import { getSourceRepoUrl } from "@/lib/source-repo"
 import { useT } from "@/lib/use-lang"
 import { DownloadButton } from "@/components/download-button"
 import { DeveloperAvatar, DeveloperLink } from "@/components/developer"
@@ -97,11 +98,21 @@ function CopyLinkButton({ mod }: { mod: Mod }) {
 export function ModDetailActions({ mod }: { mod: Mod }) {
   const { t } = useT()
   const discordUrl = getDiscordMessageUrl(mod)
+  const sourceUrl = getSourceRepoUrl(mod)
 
   return (
     <>
       <FavoriteButton mod={mod} className="mr-auto" />
       <CopyLinkButton mod={mod} />
+      {sourceUrl && (
+        <Button variant="outline" asChild>
+          <a href={sourceUrl} target="_blank" rel="noopener noreferrer" title={sourceUrl}>
+            <Github className="mr-2 h-4 w-4" />
+            {t("detail.source")}
+            <ExternalLink className="ml-2 h-3 w-3" />
+          </a>
+        </Button>
+      )}
       {discordUrl && (
         <Button variant="outline" asChild>
           <a href={discordUrl} target="_blank" rel="noopener noreferrer">
