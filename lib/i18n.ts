@@ -109,7 +109,7 @@ const ko = {
   "footer.source": "사이트 소스 코드 (GitHub)",
   "footer.data": "모드 데이터 출처 (bot.adofai.gg)",
   "footer.disclaimer":
-    "ADOMODS는 7th Beat Games 또는 ADOFAI.gg에서 제작되거나 승인받지 않았습니다. (ADOMODS is not created nor approved by 7th Beat Games or the ADOFAI.gg.)",
+    "ADOMODS는 7th Beat Games 또는 ADOFAI.gg에서 제작되거나 승인받지 않았습니다.",
 }
 
 type Key = keyof typeof ko
@@ -327,7 +327,7 @@ const zh: Record<Key, string> = {
   "footer.source": "网站源代码（GitHub）",
   "footer.data": "模组数据来源（bot.adofai.gg）",
   "footer.disclaimer":
-    "ADOMODS 并非由 7th Beat Games 或 ADOFAI.gg 制作或认可。(ADOMODS is not created nor approved by 7th Beat Games or the ADOFAI.gg.)",
+    "ADOMODS 并非由 7th Beat Games 或 ADOFAI.gg 制作或认可。",
 }
 
 export type TranslationKey = Key
