@@ -216,7 +216,7 @@ function ModDetailDialogContent({ mod }: { mod: Mod }) {
   const { t } = useT()
 
   return (
-    <DialogContent className="flex h-[90vh] w-[95vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
+    <DialogContent className="flex h-[90vh] w-[95vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl">
       <DialogHeader className="flex-shrink-0 border-b border-border px-6 py-4 pr-12 text-left">
         <DialogTitle className="text-2xl">
           <DiscordText text={mod.name} />

@@ -16,7 +16,7 @@ export default function ModPage({ modId, initialMods }: { modId: string; initial
   const mod = mods.find((m) => getModId(m) === modId)
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       <BackButton fallbackHref="/" fallbackLabel="common.allMods" />
 
       {isLoading && (
