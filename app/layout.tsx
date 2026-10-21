@@ -31,10 +31,10 @@ export const metadata: Metadata = {
   // ?v= busts browsers' favicon cache when the icons change
   icons: {
     icon: [
-      { url: "/favicon.ico?v=3", sizes: "48x48" },
-      { url: "/icon.png?v=3", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico?v=4", sizes: "48x48" },
+      { url: "/icon.png?v=4", type: "image/png", sizes: "512x512" },
     ],
-    apple: "/apple-icon.png?v=3",
+    apple: "/apple-icon.png?v=4",
   },
 }
 
