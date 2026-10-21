@@ -192,9 +192,10 @@ export async function fetchModsFromUpstream(): Promise<Mod[]> {
   return normalizeMods(await response.json()).map(slimMod)
 }
 
-// One mod: GET {MODS_API_URL}{name} (latest, with its version history) or {MODS_API_URL}{name}/{version}
+// One mod: GET {MODS_API_URL}{name}/ (latest, with its version history) or {MODS_API_URL}{name}/{version}
 export async function fetchModVersionFromUpstream(name: string, version?: string): Promise<Mod | null> {
-  const path = version ? `${encodeURIComponent(name)}/${encodeURIComponent(version)}` : encodeURIComponent(name)
+  // Same shapes as the bot serves them: mods/{name}/ (with history) and mods/{name}/{version}
+  const path = version ? `${encodeURIComponent(name)}/${encodeURIComponent(version)}` : `${encodeURIComponent(name)}/`
   const response = await fetch(`${MODS_API_URL}${path}`, {
     headers: { Accept: "application/json" },
     // Published versions don't change; the latest entry does
