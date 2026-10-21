@@ -11,6 +11,7 @@ import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { useFavorites } from "@/lib/favorites"
 import {
   formatDate,
+  getDownloadUrl,
   getModHref,
   getModId,
   isUploadedWithin,
@@ -165,7 +166,7 @@ export const ModCard = memo(function ModCard({
         </div>
 
         <div className="flex gap-2">
-          <DownloadButton url={mod.download} className="flex-1" />
+          <DownloadButton url={getDownloadUrl(mod) ?? undefined} className="flex-1" />
 
           <Button variant="outline" className="flex-1 bg-transparent" onClick={() => onOpen(mod)}>
             <Info className="mr-2 h-4 w-4" />

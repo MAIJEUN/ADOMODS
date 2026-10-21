@@ -31,9 +31,10 @@ function toRepoUrl(raw: string): string | null {
 
 const REPO_LINK = /https?:\/\/(?:www\.)?(?:github\.com|gitlab\.com|codeberg\.org)\/[^\s()<>[\]"'`|*]+/gi
 
-// The mod's source repository: from the download link, else the first repo linked in the description
+// The mod's source repository: from the download links, else the first repo linked in the description
 export function getSourceRepoUrl(mod: Mod): string | null {
-  const candidates = [mod.download ?? "", ...(mod.description?.match(REPO_LINK) ?? [])]
+  // parsedDownload first: it follows renamed repositories (OrbitRender was ADOFAIRenderer)
+  const candidates = [mod.parsedDownload ?? "", mod.download ?? "", ...(mod.description?.match(REPO_LINK) ?? [])]
   for (const candidate of candidates) {
     const repo = toRepoUrl(candidate)
     if (repo && !LOADER_REPOS.has(repo.replace("https://", "").toLowerCase())) return repo

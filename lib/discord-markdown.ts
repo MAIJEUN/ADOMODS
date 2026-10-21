@@ -60,8 +60,10 @@ export function preprocessDiscordMarkdown(text: string) {
     if (prevHasText && /^ {0,3}(-+|=+)\s*$/.test(line)) {
       out.push("")
     }
+    // "[text]<https://...>)" (missing "(") is common in posts and Discord still shows a link
+    const fixedLinks = line.replace(/\]<(https?:\/\/[^\s>]+)>\)/g, "](<$1>)")
     // Discord needs "> " with a space; ">_<" etc. are plain text
-    out.push(/^>(?![ >])/.test(line) ? `\\${line}` : line)
+    out.push(/^>(?![ >])/.test(fixedLinks) ? `\\${fixedLinks}` : fixedLinks)
   }
 
   // An unclosed code block would swallow everything after the description

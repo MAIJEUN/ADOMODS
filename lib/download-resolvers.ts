@@ -47,10 +47,18 @@ export function githubReleaseToDownload(release: GithubRelease, sourceUrl: strin
   }
 }
 
-async function resolveGithub(url: URL): Promise<ResolvedDownload | null> {
+async function resolveGithub(url: URL, version?: string): Promise<ResolvedDownload | null> {
   const repo = parseGithubRepo(url)
   if (!repo) return null
   const base = `/repos/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.repo)}`
+
+  // A specific version: its release tag is usually "1.2.0" or "v1.2.0"
+  if (version) {
+    for (const tag of [version, `v${version}`]) {
+      const tagged = await githubApi<GithubRelease>(`${base}/releases/tags/${encodeURIComponent(tag)}`)
+      if (tagged) return githubReleaseToDownload(tagged, url.toString())
+    }
+  }
 
   // /releases/latest skips prereleases; fall back to the newest release of any kind
   const release =
@@ -120,6 +128,7 @@ const decodeHtml = (text: string) =>
     .replace(/&quot;/g, '"')
     .replace(/&#39;|&#x27;/g, "'")
 
-export async function resolveDownload(url: URL): Promise<ResolvedDownload | null> {
-  return (await resolveGithub(url)) ?? (await resolveDriveFolder(url)) ?? (await resolveMediafire(url))
+// `version` picks that release on GitHub (falls back to the latest when no tag matches)
+export async function resolveDownload(url: URL, version?: string): Promise<ResolvedDownload | null> {
+  return (await resolveGithub(url, version)) ?? (await resolveDriveFolder(url)) ?? (await resolveMediafire(url))
 }

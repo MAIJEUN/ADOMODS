@@ -19,22 +19,36 @@ const NOTE_KEYS: Record<DownloadNote, TranslationKey> = {
 // One lookup per link per page session; failures are retried on the next click
 const resolveCache = new Map<string, Promise<ResolvedDownload>>()
 
-function resolve(url: string) {
-  let pending = resolveCache.get(url)
+function resolve(url: string, version?: string) {
+  const key = version ? `${url}\n${version}` : url
+  let pending = resolveCache.get(key)
   if (!pending) {
-    pending = fetch(`/api/resolve-download?url=${encodeURIComponent(url)}`)
+    const query = new URLSearchParams({ url })
+    if (version) query.set("version", version)
+    pending = fetch(`/api/resolve-download?${query}`)
       .then((res) => res.json())
       .then((data: ResolvedDownload) => (Array.isArray(data?.files) ? data : Promise.reject()))
       .catch((): ResolvedDownload => {
-        resolveCache.delete(url)
+        resolveCache.delete(key)
         return { files: [], sourceUrl: url, note: "failed" }
       })
-    resolveCache.set(url, pending)
+    resolveCache.set(key, pending)
   }
   return pending
 }
 
-export function DownloadButton({ url, className, external }: { url?: string; className?: string; external?: boolean }) {
+export function DownloadButton({
+  url,
+  version,
+  className,
+  external,
+}: {
+  url?: string
+  // For a past version: release links resolve to that version's release instead of the latest
+  version?: string
+  className?: string
+  external?: boolean
+}) {
   const [loading, setLoading] = useState(false)
   const [picker, setPicker] = useState<ResolvedDownload | null>(null)
   const { t } = useT()
@@ -59,11 +73,11 @@ export function DownloadButton({ url, className, external }: { url?: string; cla
     )
   }
 
-  const prefetch = () => void resolve(plan.url)
+  const prefetch = () => void resolve(plan.url, version)
 
   const handleClick = async () => {
     setLoading(true)
-    const result = await resolve(plan.url)
+    const result = await resolve(plan.url, version)
     setLoading(false)
     // A single file downloads right away; popup blockers can still stop it, then the picker is the fallback.
     // (No "noopener" feature: with it window.open always returns null, so a block couldn't be detected.)

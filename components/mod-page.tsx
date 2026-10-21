@@ -8,6 +8,7 @@ import { BackButton } from "@/components/back-button"
 import { useMods } from "@/components/mod-card"
 import { ModDetailActions, ModDetailBody } from "@/components/mod-detail"
 import { DiscordText } from "@/components/mod-markdown"
+import { useModVersion } from "@/components/mod-version"
 
 // Standalone page for a shared /mods/[id] link
 export default function ModPage({ modId, initialMods }: { modId: string; initialMods?: Mod[] }) {
@@ -34,23 +35,29 @@ export default function ModPage({ modId, initialMods }: { modId: string; initial
         </Card>
       )}
 
-      {mod && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-3xl">
-              <h2>
-                <DiscordText text={mod.name} />
-              </h2>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ModDetailBody mod={mod} />
-          </CardContent>
-          <CardFooter className="flex flex-wrap justify-end gap-2 border-t pt-6">
-            <ModDetailActions mod={mod} />
-          </CardFooter>
-        </Card>
-      )}
+      {mod && <ModPageCard mod={mod} />}
     </div>
+  )
+}
+
+function ModPageCard({ mod }: { mod: Mod }) {
+  const versionState = useModVersion(mod)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-3xl">
+          <h2>
+            <DiscordText text={mod.name} />
+          </h2>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ModDetailBody mod={mod} versionState={versionState} />
+      </CardContent>
+      <CardFooter className="flex flex-wrap justify-end gap-2 border-t pt-6">
+        <ModDetailActions mod={mod} versionState={versionState} />
+      </CardFooter>
+    </Card>
   )
 }

@@ -6,20 +6,24 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Check, ExternalLink, Github, Link2, MessageSquare } from "lucide-react"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
-import { formatDate, getDiscordMessageUrl, getModHref, getModId, type Mod } from "@/lib/mods"
+import { formatDate, getDiscordMessageUrl, getDownloadUrl, getModHref, getModId, type Mod } from "@/lib/mods"
 import { getSourceRepoUrl } from "@/lib/source-repo"
 import { useT } from "@/lib/use-lang"
 import { DownloadButton } from "@/components/download-button"
 import { DeveloperAvatar, DeveloperLink } from "@/components/developer"
 import { DiscordText, ImageWithFallback, ModDescription } from "@/components/mod-markdown"
 import { FavoriteButton } from "@/components/mod-card"
+import { OlderVersionNotice, useModVersion, VersionPicker, type ModVersionState } from "@/components/mod-version"
 
-// Description, info and reference image; shared by the dialog and the /mods/[id] page
-export function ModDetailBody({ mod }: { mod: Mod }) {
+// Description, info and reference image; shared by the dialog and the /mods/[id] page.
+// `versionState` switches the shown content to a past version.
+export function ModDetailBody({ mod: latestMod, versionState }: { mod: Mod; versionState?: ModVersionState }) {
   const { t, locale } = useT()
+  const mod = versionState?.shown ?? latestMod
 
   return (
-    <div className="max-w-none [&>*]:break-words">
+    <div className={`max-w-none [&>*]:break-words ${versionState?.loading ? "opacity-60" : ""}`}>
+      {versionState && <OlderVersionNotice state={versionState} />}
       {mod.description && (
         <>
           <h2 className="text-xl font-bold mt-3 mb-2">{t("detail.description")}</h2>
@@ -40,7 +44,8 @@ export function ModDetailBody({ mod }: { mod: Mod }) {
         )}
         {mod.version && (
           <li>
-            <strong>{t("detail.version")}</strong> {mod.version}
+            <strong>{t("detail.version")}</strong>{" "}
+            {versionState ? <VersionPicker state={versionState} /> : mod.version}
           </li>
         )}
         {mod.uploadedTimestamp && (
@@ -95,8 +100,9 @@ function CopyLinkButton({ mod }: { mod: Mod }) {
   )
 }
 
-export function ModDetailActions({ mod }: { mod: Mod }) {
+export function ModDetailActions({ mod: latestMod, versionState }: { mod: Mod; versionState?: ModVersionState }) {
   const { t } = useT()
+  const mod = versionState?.shown ?? latestMod
   const discordUrl = getDiscordMessageUrl(mod)
   const sourceUrl = getSourceRepoUrl(mod)
 
@@ -122,13 +128,18 @@ export function ModDetailActions({ mod }: { mod: Mod }) {
           </a>
         </Button>
       )}
-      <DownloadButton url={mod.download} external />
+      <DownloadButton
+        url={getDownloadUrl(mod) ?? undefined}
+        version={versionState && !versionState.isLatest ? mod.version : undefined}
+        external
+      />
     </>
   )
 }
 
 function ModDetailDialogContent({ mod }: { mod: Mod }) {
   const { t } = useT()
+  const versionState = useModVersion(mod)
 
   return (
     <DialogContent className="sm:max-w-5xl w-[95vw] max-h-[90vh] flex flex-col">
@@ -140,11 +151,11 @@ function ModDetailDialogContent({ mod }: { mod: Mod }) {
       </DialogHeader>
 
       <div className="flex-1 overflow-y-auto pr-2">
-        <ModDetailBody mod={mod} />
+        <ModDetailBody mod={mod} versionState={versionState} />
       </div>
 
       <DialogFooter className="flex-shrink-0 flex flex-wrap justify-end gap-2 pt-4 border-t">
-        <ModDetailActions mod={mod} />
+        <ModDetailActions mod={mod} versionState={versionState} />
       </DialogFooter>
     </DialogContent>
   )

@@ -21,6 +21,17 @@ export interface Mod {
   message?: string
   cachedAvatar?: string
   imageURL?: string
+  // Direct file link the bot resolved from `download` (e.g. a GitHub release asset)
+  parsedDownload?: string
+  // Set by the bot for entries that shouldn't show up in searches
+  hideFromSearch?: boolean
+  // Every published version of this mod, including the current one
+  versions?: ModVersion[]
+}
+
+export interface ModVersion {
+  version: string
+  uploadedTimestamp?: number
 }
 
 // Only the fields the UI uses; keeps the API response and the server-rendered page payload small
@@ -42,12 +53,27 @@ const MOD_FIELDS = [
   "message",
   "cachedAvatar",
   "imageURL",
+  "parsedDownload",
+  "hideFromSearch",
+  "versions",
 ] as const satisfies readonly (keyof Mod)[]
+
+// Korean particles that start a line where the bot cut the mod name out of the sentence
+// ("OrbitRender는 레벨을…" arrives as "는 레벨을…"). 이/가/에/도 are left out: lines legitimately
+// start with them ("이 모드는…").
+const STRIPPED_NAME_LINE = /^((?:\s*(?:>|[-*]|#{1,3}|-#)\s+)*)(는|은|을|를|의|와|과|에서|으로|로)(?=\s)/m
+
+// The bot removes the first occurrence of the mod's name from its description; put it back
+export const restoreStrippedName = (description: string, name: string) =>
+  name ? description.replace(STRIPPED_NAME_LINE, (_, prefix: string, particle: string) => `${prefix}${name}${particle}`) : description
 
 const slimMod = (mod: Mod): Mod => {
   const slim: Record<string, unknown> = {}
   for (const key of MOD_FIELDS) {
     if (mod[key] !== undefined && mod[key] !== null) slim[key] = mod[key]
+  }
+  if (typeof slim.description === "string" && typeof slim.name === "string") {
+    slim.description = restoreStrippedName(slim.description, slim.name)
   }
   return slim as unknown as Mod
 }
@@ -70,7 +96,19 @@ export const formatDate = (timestamp?: number, locale = "ko-KR") => {
 
 // Mods shown in lists (mod list, recent row, developer pages and counts): only entries with a
 // version and a usable download link. Others are incomplete bot entries.
-export const isListedMod = (mod: Mod) => !!mod.version && !!safeExternalUrl(mod.download)
+export const isListedMod = (mod: Mod) => !!mod.version && !!getDownloadUrl(mod) && !mod.hideFromSearch
+
+// The bot's resolved file link when there is one, otherwise the link the author posted
+export const getDownloadUrl = (mod: Mod) => safeExternalUrl(mod.parsedDownload) ?? safeExternalUrl(mod.download)
+
+// Versions newest first; falls back to the current version for entries without a history
+export function getModVersions(mod: Mod): ModVersion[] {
+  const versions = mod.versions?.filter((v) => v?.version) ?? []
+  if (mod.version && !versions.some((v) => v.version === mod.version)) {
+    versions.push({ version: mod.version, uploadedTimestamp: mod.uploadedTimestamp })
+  }
+  return [...versions].sort((a, b) => (b.uploadedTimestamp || 0) - (a.uploadedTimestamp || 0))
+}
 
 // Stable identifier used in /mods/[id] URLs and for favorites
 export const getModId = (mod: Mod) => String(mod._id ?? mod.id)
@@ -152,6 +190,21 @@ export async function fetchModsFromUpstream(): Promise<Mod[]> {
     throw new Error(`API returned ${response.status}`)
   }
   return normalizeMods(await response.json()).map(slimMod)
+}
+
+// One specific version of a mod: GET {MODS_API_URL}{name}/{version}
+export async function fetchModVersionFromUpstream(name: string, version: string): Promise<Mod | null> {
+  const response = await fetch(`${MODS_API_URL}${encodeURIComponent(name)}/${encodeURIComponent(version)}`, {
+    headers: { Accept: "application/json" },
+    // Published versions don't change
+    next: { revalidate: 86400 },
+    signal: AbortSignal.timeout(10_000),
+  })
+  if (response.status === 404) return null
+  if (!response.ok) throw new Error(`API returned ${response.status}`)
+  const data = await response.json()
+  const entry = (Array.isArray(data) ? data[0] : (data?.mod ?? data)) as Mod | undefined
+  return entry && typeof entry === "object" ? slimMod(entry) : null
 }
 
 // For server-rendered pages: never fail the render, the client refetches if this comes back empty

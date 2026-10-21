@@ -5,6 +5,7 @@ import { resolveDownload } from "@/lib/download-resolvers"
 // Turns a release page / folder / hosting page link into direct file links
 export async function GET(request: NextRequest) {
   const raw = request.nextUrl.searchParams.get("url")
+  const version = request.nextUrl.searchParams.get("version")?.slice(0, 50) || undefined
   const plan = getDownloadPlan(raw ?? undefined)
   // Only links the client would send here; this keeps the route from fetching arbitrary URLs
   if (plan?.kind !== "resolve") {
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const resolved = await resolveDownload(new URL(plan.url))
+    const resolved = await resolveDownload(new URL(plan.url), version)
     if (!resolved) return NextResponse.json({ error: "Unsupported URL" }, { status: 400 })
     return NextResponse.json(resolved, {
       headers: { "Cache-Control": "public, s-maxage=600, stale-while-revalidate=3600" },
