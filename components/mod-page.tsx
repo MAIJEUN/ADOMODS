@@ -1,14 +1,13 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 import { getModId, type Mod } from "@/lib/mods"
 import { useT } from "@/lib/use-lang"
 import { BackButton } from "@/components/back-button"
 import { useMods } from "@/components/mod-card"
-import { ModDetailActions, ModDetailBody } from "@/components/mod-detail"
+import { ModDetailView } from "@/components/mod-detail"
 import { DiscordText } from "@/components/mod-markdown"
-import { useModVersion } from "@/components/mod-version"
 
 // Standalone page for a shared /mods/[id] link
 export default function ModPage({ modId, initialMods }: { modId: string; initialMods?: Mod[] }) {
@@ -41,23 +40,17 @@ export default function ModPage({ modId, initialMods }: { modId: string; initial
 }
 
 function ModPageCard({ mod }: { mod: Mod }) {
-  const versionState = useModVersion(mod)
-
   return (
-    <Card>
-      <CardHeader>
+    // No overflow-hidden here: it would stop the sidebar from sticking
+    <Card className="gap-0 py-0">
+      <CardHeader className="border-b border-border py-5">
         <CardTitle className="text-3xl">
           <h2>
             <DiscordText text={mod.name} />
           </h2>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <ModDetailBody mod={mod} versionState={versionState} />
-      </CardContent>
-      <CardFooter className="flex flex-wrap justify-end gap-2 border-t pt-6">
-        <ModDetailActions mod={mod} versionState={versionState} />
-      </CardFooter>
+      <ModDetailView mod={mod} />
     </Card>
   )
 }

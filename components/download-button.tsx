@@ -42,12 +42,17 @@ export function DownloadButton({
   version,
   className,
   external,
+  size,
+  label: text,
 }: {
   url?: string
   // For a past version: release links resolve to that version's release instead of the latest
   version?: string
   className?: string
   external?: boolean
+  size?: "default" | "lg"
+  // Replaces the default "Download" text
+  label?: string
 }) {
   const [loading, setLoading] = useState(false)
   const [picker, setPicker] = useState<ResolvedDownload | null>(null)
@@ -58,14 +63,14 @@ export function DownloadButton({
   const label = (
     <>
       {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-      {t("download.button")}
+      {text ?? t("download.button")}
       {external && <ExternalLink className="ml-2 h-3 w-3" />}
     </>
   )
 
   if (plan.kind !== "resolve") {
     return (
-      <Button className={className} asChild>
+      <Button size={size} className={className} asChild>
         <a href={plan.url} target="_blank" rel="noopener noreferrer">
           {label}
         </a>
@@ -94,6 +99,7 @@ export function DownloadButton({
   return (
     <>
       <Button
+        size={size}
         className={className}
         disabled={loading}
         onClick={handleClick}

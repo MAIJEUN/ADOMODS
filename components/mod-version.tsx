@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import useSWR from "swr"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { History, Loader2 } from "lucide-react"
+import { History } from "lucide-react"
 import { getModVersions, type Mod, type ModVersion } from "@/lib/mods"
 import { useT } from "@/lib/use-lang"
 
@@ -78,55 +78,46 @@ export function useModVersion(mod: Mod): ModVersionState {
   }
 }
 
-export function VersionPicker({ state }: { state: ModVersionState }) {
+export function VersionPicker({ state, className }: { state: ModVersionState; className?: string }) {
   const { t, locale } = useT()
   const latest = state.versions[0]?.version
 
-  if (state.versions.length < 2) return <span>{state.selected}</span>
-
   return (
-    <span className="inline-flex items-center gap-2 align-middle">
-      <Select value={state.selected} onValueChange={state.select}>
-        <SelectTrigger size="sm" aria-label={t("detail.versionPick")} className="min-w-32">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent className="max-h-72">
-          {state.versions.map((v) => (
-            <SelectItem key={v.version} value={v.version}>
-              <span className="font-medium">{v.version}</span>
-              {v.version === latest && <span className="text-xs text-primary">{t("detail.versionLatest")}</span>}
-              {v.uploadedTimestamp && (
-                <span className="text-xs text-muted-foreground">
-                  {new Date(v.uploadedTimestamp).toLocaleDateString(locale)}
-                </span>
-              )}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <span className="text-xs text-muted-foreground">{t("detail.versionCount", { n: state.versions.length })}</span>
-      {state.loading && <Loader2 aria-hidden className="h-4 w-4 animate-spin text-muted-foreground" />}
-    </span>
+    <Select value={state.selected} onValueChange={state.select}>
+      <SelectTrigger aria-label={t("detail.versionPick")} className={className}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent className="max-h-72">
+        {state.versions.map((v) => (
+          <SelectItem key={v.version} value={v.version}>
+            <span className="font-medium">{v.version}</span>
+            {v.version === latest && <span className="text-xs text-primary">{t("detail.versionLatest")}</span>}
+            {v.uploadedTimestamp && (
+              <span className="text-xs text-muted-foreground">
+                {new Date(v.uploadedTimestamp).toLocaleDateString(locale)}
+              </span>
+            )}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
 
-// Shown above the details while an older version is selected
+// Shown under the version picker while an older version is selected
 export function OlderVersionNotice({ state }: { state: ModVersionState }) {
   const { t } = useT()
   if (state.isLatest) return null
   const latest = state.versions[0]?.version
 
   return (
-    <div
-      role="status"
-      className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-sm"
-    >
-      <History className="h-4 w-4 text-muted-foreground" />
-      <span className="flex-1">
+    <div role="status" className="space-y-2 rounded-md border border-border bg-muted/50 p-3 text-sm">
+      <p className="flex items-start gap-2">
+        <History aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
         {state.failed ? t("detail.versionLoadError") : t("detail.olderVersionNotice", { v: state.selected ?? "" })}
-      </span>
+      </p>
       {latest && (
-        <Button variant="outline" size="sm" onClick={() => state.select(latest)}>
+        <Button variant="outline" size="sm" className="w-full" onClick={() => state.select(latest)}>
           {t("detail.backToLatest")}
         </Button>
       )}

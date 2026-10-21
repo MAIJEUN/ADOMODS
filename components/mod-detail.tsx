@@ -1,10 +1,11 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { usePathname } from "next/navigation"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Check, ExternalLink, Github, Link2, MessageSquare } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Check, ExternalLink, Github, Link2, Loader2, MessageSquare } from "lucide-react"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { formatDate, getDiscordMessageUrl, getDownloadUrl, getModHref, getModId, type Mod } from "@/lib/mods"
 import { getSourceRepoUrl } from "@/lib/source-repo"
@@ -15,64 +16,39 @@ import { DiscordText, ImageWithFallback, ModDescription } from "@/components/mod
 import { FavoriteButton } from "@/components/mod-card"
 import { OlderVersionNotice, useModVersion, VersionPicker, type ModVersionState } from "@/components/mod-version"
 
-// Description, info and reference image; shared by the dialog and the /mods/[id] page.
-// `versionState` switches the shown content to a past version.
-export function ModDetailBody({ mod: latestMod, versionState }: { mod: Mod; versionState?: ModVersionState }) {
-  const { t, locale } = useT()
-  const mod = versionState?.shown ?? latestMod
+// Main column: what the mod is (description and reference image)
+function ModDetailMain({ mod, versionState }: { mod: Mod; versionState: ModVersionState }) {
+  const { t } = useT()
 
   return (
-    <div className={`max-w-none [&>*]:break-words ${versionState?.loading ? "opacity-60" : ""}`}>
-      {versionState && <OlderVersionNotice state={versionState} />}
+    <div className={`max-w-none [&>*]:break-words ${versionState.loading ? "opacity-60" : ""}`}>
       {mod.description && (
         <>
-          <h2 className="text-xl font-bold mt-3 mb-2">{t("detail.description")}</h2>
+          <h3 className="mb-2 flex items-center gap-2 text-lg font-bold">
+            {t("detail.description")}
+            {/* Makes clear the text below belongs to the older version picked in the sidebar */}
+            {!versionState.isLatest && <Badge variant="outline">v{mod.version}</Badge>}
+          </h3>
           <ModDescription description={mod.description} />
         </>
       )}
 
-      <h2 className="text-xl font-bold mt-3 mb-2">{t("detail.info")}</h2>
-      <ul className="list-disc pl-5 mb-2 space-y-1">
-        {mod.cachedUsername && (
-          <li>
-            <strong>{t("detail.author")}</strong>{" "}
-            <span className="inline-flex items-center gap-1.5 align-middle">
-              <DeveloperAvatar mod={mod} size="md" />
-              <DeveloperLink mod={mod} className="text-primary" />
-            </span>
-          </li>
-        )}
-        {mod.version && (
-          <li>
-            <strong>{t("detail.version")}</strong>{" "}
-            {versionState ? <VersionPicker state={versionState} /> : mod.version}
-          </li>
-        )}
-        {mod.uploadedTimestamp && (
-          <li>
-            <strong>{t("detail.uploaded")}</strong> {formatDate(mod.uploadedTimestamp, locale)}
-          </li>
-        )}
-      </ul>
-
       {mod.imageURL && (
-        <div className="mt-6 pt-6 border-t border-border">
-          <h3 className="text-lg font-semibold mb-3">{t("detail.referenceImage")}</h3>
-          <div className="relative w-full">
-            <ImageWithFallback
-              src={mod.imageURL}
-              alt={stripDiscordEmoji(mod.name)}
-              fallbackHref={getDiscordMessageUrl(mod)}
-              className="max-w-full h-auto rounded-lg border border-border shadow-sm"
-            />
-          </div>
+        <div className="mt-6 border-t border-border pt-6">
+          <h3 className="mb-3 text-lg font-semibold">{t("detail.referenceImage")}</h3>
+          <ImageWithFallback
+            src={mod.imageURL}
+            alt={stripDiscordEmoji(mod.name)}
+            fallbackHref={getDiscordMessageUrl(mod)}
+            className="h-auto max-w-full rounded-lg border border-border shadow-sm"
+          />
         </div>
       )}
     </div>
   )
 }
 
-function CopyLinkButton({ mod }: { mod: Mod }) {
+function CopyLinkButton({ mod, className }: { mod: Mod; className?: string }) {
   const { t } = useT()
   const [copied, setCopied] = useState(false)
 
@@ -85,6 +61,7 @@ function CopyLinkButton({ mod }: { mod: Mod }) {
   return (
     <Button
       variant="outline"
+      className={className}
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(`${window.location.origin}${getModHref(mod)}`)
@@ -94,69 +71,160 @@ function CopyLinkButton({ mod }: { mod: Mod }) {
         }
       }}
     >
-      {copied ? <Check className="mr-2 h-4 w-4" /> : <Link2 className="mr-2 h-4 w-4" />}
+      {copied ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
       {copied ? t("detail.copied") : t("detail.copyLink")}
     </Button>
   )
 }
 
-export function ModDetailActions({ mod: latestMod, versionState }: { mod: Mod; versionState?: ModVersionState }) {
-  const { t } = useT()
-  const mod = versionState?.shown ?? latestMod
+function SidebarSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="space-y-2">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+      {children}
+    </section>
+  )
+}
+
+function ExternalRow({ href, icon, label }: { href: string; icon: ReactNode; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+    >
+      {icon}
+      <span className="flex-1 truncate">{label}</span>
+      <ExternalLink aria-hidden className="h-3.5 w-3.5 text-muted-foreground" />
+    </a>
+  )
+}
+
+// Sidebar: everything you do with the mod (download, version, info, links)
+function ModDetailSidebar({
+  latestMod,
+  mod,
+  versionState,
+}: {
+  latestMod: Mod
+  mod: Mod
+  versionState: ModVersionState
+}) {
+  const { t, locale } = useT()
   const discordUrl = getDiscordMessageUrl(mod)
   const sourceUrl = getSourceRepoUrl(mod)
+  const hasHistory = versionState.versions.length > 1
 
   return (
-    <>
-      <FavoriteButton mod={mod} className="mr-auto" />
-      <CopyLinkButton mod={mod} />
-      {sourceUrl && (
-        <Button variant="outline" asChild>
-          <a href={sourceUrl} target="_blank" rel="noopener noreferrer" title={sourceUrl}>
-            <Github className="mr-2 h-4 w-4" />
-            {t("detail.source")}
-            <ExternalLink className="ml-2 h-3 w-3" />
-          </a>
-        </Button>
-      )}
-      {discordUrl && (
-        <Button variant="outline" asChild>
-          <a href={discordUrl} target="_blank" rel="noopener noreferrer">
-            <MessageSquare className="mr-2 h-4 w-4" />
-            {t("detail.discord")}
-            <ExternalLink className="ml-2 h-3 w-3" />
-          </a>
-        </Button>
-      )}
+    <div className="space-y-6">
       <DownloadButton
         url={getDownloadUrl(mod) ?? undefined}
-        version={versionState && !versionState.isLatest ? mod.version : undefined}
-        external
+        version={versionState.isLatest ? undefined : mod.version}
+        size="lg"
+        className="w-full"
+        label={mod.version ? t("detail.downloadVersion", { v: mod.version }) : undefined}
       />
-    </>
+
+      <SidebarSection title={t("detail.versionTitle")}>
+        {hasHistory ? (
+          <>
+            <VersionPicker state={versionState} className="w-full" />
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {versionState.loading && <Loader2 aria-hidden className="h-3 w-3 animate-spin" />}
+              {t("detail.versionCount", { n: versionState.versions.length })}
+            </p>
+            <OlderVersionNotice state={versionState} />
+          </>
+        ) : (
+          <p className="text-sm font-medium">{mod.version ?? t("common.unknownDate")}</p>
+        )}
+      </SidebarSection>
+
+      <SidebarSection title={t("detail.info")}>
+        <dl className="space-y-2 text-sm">
+          {latestMod.cachedUsername && (
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-muted-foreground">{t("detail.author")}</dt>
+              <dd className="flex min-w-0 items-center gap-1.5">
+                <DeveloperAvatar mod={latestMod} />
+                <DeveloperLink mod={latestMod} className="truncate font-medium" />
+              </dd>
+            </div>
+          )}
+          {mod.uploadedTimestamp && (
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-muted-foreground">{t("detail.uploaded")}</dt>
+              <dd>{formatDate(mod.uploadedTimestamp, locale)}</dd>
+            </div>
+          )}
+          {latestMod.category && (
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-muted-foreground">{t("detail.category")}</dt>
+              <dd>
+                <Badge variant="outline">{latestMod.category}</Badge>
+              </dd>
+            </div>
+          )}
+        </dl>
+      </SidebarSection>
+
+      {(sourceUrl || discordUrl) && (
+        <SidebarSection title={t("detail.links")}>
+          <div className="-mx-2">
+            {sourceUrl && <ExternalRow href={sourceUrl} icon={<Github className="h-4 w-4" />} label={t("detail.source")} />}
+            {discordUrl && (
+              <ExternalRow href={discordUrl} icon={<MessageSquare className="h-4 w-4" />} label={t("detail.discord")} />
+            )}
+          </div>
+        </SidebarSection>
+      )}
+
+      <div className="flex gap-2">
+        <FavoriteButton mod={latestMod} showLabel className="flex-1" />
+        <CopyLinkButton mod={latestMod} className="flex-1" />
+      </div>
+    </div>
+  )
+}
+
+// Description on the left, actions on the right; on phones the sidebar comes first so the download
+// is right there. With `scrollColumns`, each column scrolls on its own (dialog), so the sidebar stays put.
+export function ModDetailView({ mod, scrollColumns = false }: { mod: Mod; scrollColumns?: boolean }) {
+  const versionState = useModVersion(mod)
+  const shown = versionState.shown
+
+  return (
+    <div
+      className={`grid md:grid-cols-[minmax(0,1fr)_18rem] ${scrollColumns ? "min-h-0 flex-1 overflow-y-auto md:grid-rows-[minmax(0,1fr)] md:overflow-hidden" : ""}`}
+    >
+      <aside
+        className={`border-b border-border bg-muted/20 p-5 md:order-2 md:border-b-0 md:border-l ${scrollColumns ? "md:overflow-y-auto" : "md:rounded-br-xl"}`}
+      >
+        {/* On the full page the sidebar sticks below the site header while the description scrolls */}
+        <div className={scrollColumns ? "" : "md:sticky md:top-32"}>
+          <ModDetailSidebar latestMod={mod} mod={shown} versionState={versionState} />
+        </div>
+      </aside>
+      <div className={`p-6 md:order-1 ${scrollColumns ? "md:overflow-y-auto" : ""}`}>
+        <ModDetailMain mod={shown} versionState={versionState} />
+      </div>
+    </div>
   )
 }
 
 function ModDetailDialogContent({ mod }: { mod: Mod }) {
   const { t } = useT()
-  const versionState = useModVersion(mod)
 
   return (
-    <DialogContent className="sm:max-w-5xl w-[95vw] max-h-[90vh] flex flex-col">
-      <DialogHeader className="flex-shrink-0">
+    <DialogContent className="flex h-[90vh] w-[95vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
+      <DialogHeader className="flex-shrink-0 border-b border-border px-6 py-4 pr-12 text-left">
         <DialogTitle className="text-2xl">
           <DiscordText text={mod.name} />
         </DialogTitle>
-        <DialogDescription>{t("detail.subtitle")}</DialogDescription>
+        <DialogDescription className="sr-only">{t("detail.subtitle")}</DialogDescription>
       </DialogHeader>
-
-      <div className="flex-1 overflow-y-auto pr-2">
-        <ModDetailBody mod={mod} versionState={versionState} />
-      </div>
-
-      <DialogFooter className="flex-shrink-0 flex flex-wrap justify-end gap-2 pt-4 border-t">
-        <ModDetailActions mod={mod} versionState={versionState} />
-      </DialogFooter>
+      <ModDetailView mod={mod} scrollColumns />
     </DialogContent>
   )
 }

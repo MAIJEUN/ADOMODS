@@ -44,12 +44,23 @@ export function useMods(initialMods?: Mod[]) {
   return { mods, error: error as Error | undefined, isLoading }
 }
 
-export function FavoriteButton({ mod, className }: { mod: Mod; className?: string }) {
+export function FavoriteButton({ mod, className, showLabel }: { mod: Mod; className?: string; showLabel?: boolean }) {
   const { t } = useT()
   const { isFavorite, toggleFavorite } = useFavorites()
   const id = getModId(mod)
   const active = isFavorite(id)
   const label = active ? t("card.unfavorite") : t("card.favorite")
+
+  const star = <Star className={active ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"} />
+
+  if (showLabel) {
+    return (
+      <Button variant="outline" aria-pressed={active} className={className} onClick={() => toggleFavorite(id)}>
+        {star}
+        {t("list.favorites")}
+      </Button>
+    )
+  }
 
   return (
     <Button
@@ -61,7 +72,7 @@ export function FavoriteButton({ mod, className }: { mod: Mod; className?: strin
       className={className}
       onClick={() => toggleFavorite(id)}
     >
-      <Star className={active ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"} />
+      {star}
     </Button>
   )
 }
