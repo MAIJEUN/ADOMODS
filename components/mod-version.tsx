@@ -38,7 +38,16 @@ export interface ModVersionState {
 }
 
 export function useModVersion(mod: Mod): ModVersionState {
-  const versions = useMemo(() => getModVersions(mod), [mod])
+  // The mod list doesn't include version history; the single-mod endpoint does, so fetch it on demand
+  const { data: history } = useSWR(
+    mod.versions?.length ? null : `/api/mod-version?${new URLSearchParams({ name: mod.name })}`,
+    fetcher,
+    { revalidateOnFocus: false },
+  )
+  const versions = useMemo(
+    () => getModVersions(mod.versions?.length ? mod : { ...mod, versions: history?.versions }),
+    [mod, history],
+  )
   const [selection, setSelection] = useState<{ mod: Mod; version: string } | null>(null)
   // A selection only applies to the mod it was made for (the dialog is reused across mods)
   const selected = selection?.mod === mod ? selection.version : mod.version
