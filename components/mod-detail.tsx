@@ -187,27 +187,33 @@ function ModDetailSidebar({
   )
 }
 
-// Description on the left, actions on the right; on phones the sidebar comes first so the download
-// is right there. With `scrollColumns`, each column scrolls on its own (dialog), so the sidebar stays put.
-export function ModDetailView({ mod, scrollColumns = false }: { mod: Mod; scrollColumns?: boolean }) {
+// Description on the left, actions on the right; below lg/md the sidebar comes first so the download is
+// right there.
+// - "dialog": fills the dialog and each column scrolls on its own, so the sidebar stays put
+// - "page": the full-width /mods/[id] page; the sidebar is its own panel that sticks below the header
+export function ModDetailView({ mod, variant }: { mod: Mod; variant: "dialog" | "page" }) {
   const versionState = useModVersion(mod)
   const shown = versionState.shown
+  const sidebar = <ModDetailSidebar latestMod={mod} mod={shown} versionState={versionState} />
+  const main = <ModDetailMain mod={shown} versionState={versionState} />
+
+  if (variant === "page") {
+    return (
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <aside className="self-start rounded-xl border border-border bg-card p-5 lg:sticky lg:top-32 lg:order-2">
+          {sidebar}
+        </aside>
+        <div className="min-w-0 lg:order-1">{main}</div>
+      </div>
+    )
+  }
 
   return (
-    <div
-      className={`grid md:grid-cols-[minmax(0,1fr)_18rem] ${scrollColumns ? "min-h-0 flex-1 overflow-y-auto md:grid-rows-[minmax(0,1fr)] md:overflow-hidden" : ""}`}
-    >
-      <aside
-        className={`border-b border-border bg-muted/20 p-5 md:order-2 md:border-b-0 md:border-l ${scrollColumns ? "md:overflow-y-auto" : "md:rounded-br-xl"}`}
-      >
-        {/* On the full page the sidebar sticks below the site header while the description scrolls */}
-        <div className={scrollColumns ? "" : "md:sticky md:top-32"}>
-          <ModDetailSidebar latestMod={mod} mod={shown} versionState={versionState} />
-        </div>
+    <div className="grid min-h-0 flex-1 overflow-y-auto md:grid-cols-[minmax(0,1fr)_18rem] md:grid-rows-[minmax(0,1fr)] md:overflow-hidden">
+      <aside className="border-b border-border bg-muted/20 p-5 md:order-2 md:overflow-y-auto md:border-b-0 md:border-l">
+        {sidebar}
       </aside>
-      <div className={`p-6 md:order-1 ${scrollColumns ? "md:overflow-y-auto" : ""}`}>
-        <ModDetailMain mod={shown} versionState={versionState} />
-      </div>
+      <div className="p-6 md:order-1 md:overflow-y-auto">{main}</div>
     </div>
   )
 }
@@ -223,7 +229,7 @@ function ModDetailDialogContent({ mod }: { mod: Mod }) {
         </DialogTitle>
         <DialogDescription className="sr-only">{t("detail.subtitle")}</DialogDescription>
       </DialogHeader>
-      <ModDetailView mod={mod} scrollColumns />
+      <ModDetailView mod={mod} variant="dialog" />
     </DialogContent>
   )
 }

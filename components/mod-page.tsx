@@ -16,7 +16,7 @@ export default function ModPage({ modId, initialMods }: { modId: string; initial
   const mod = mods.find((m) => getModId(m) === modId)
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="space-y-6">
       <BackButton fallbackHref="/" fallbackLabel="common.allMods" />
 
       {isLoading && (
@@ -34,23 +34,18 @@ export default function ModPage({ modId, initialMods }: { modId: string; initial
         </Card>
       )}
 
-      {mod && <ModPageCard mod={mod} />}
+      {mod && <ModPageContent mod={mod} />}
     </div>
   )
 }
 
-function ModPageCard({ mod }: { mod: Mod }) {
+function ModPageContent({ mod }: { mod: Mod }) {
   return (
-    // No overflow-hidden here: it would stop the sidebar from sticking
-    <Card className="gap-0 py-0">
-      <CardHeader className="border-b border-border py-5">
-        <CardTitle className="text-3xl">
-          <h2>
-            <DiscordText text={mod.name} />
-          </h2>
-        </CardTitle>
-      </CardHeader>
-      <ModDetailView mod={mod} />
-    </Card>
+    <article className="space-y-6">
+      <h2 className="border-b border-border pb-5 text-3xl font-bold md:text-4xl">
+        <DiscordText text={mod.name} />
+      </h2>
+      <ModDetailView mod={mod} variant="page" />
+    </article>
   )
 }
