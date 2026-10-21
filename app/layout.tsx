@@ -28,9 +28,13 @@ export const metadata: Metadata = {
   },
   description: "얼불춤 모드 리스트를 시각적으로 편리하게 확인하세요",
   generator: "v0.app",
+  // ?v= busts browsers' favicon cache when the icons change
   icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-icon.png",
+    icon: [
+      { url: "/favicon.ico?v=2", sizes: "48x48" },
+      { url: "/icon.png?v=2", type: "image/png", sizes: "512x512" },
+    ],
+    apple: "/apple-icon.png?v=2",
   },
 }
 
