@@ -34,8 +34,7 @@ function ModDetailMain({ mod, versionState }: { mod: Mod; versionState: ModVersi
       )}
 
       {mod.imageURL && (
-        <div className="mt-6 border-t border-border pt-6">
-          <h3 className="mb-3 text-lg font-semibold">{t("detail.referenceImage")}</h3>
+        <div className="mt-6">
           <ImageWithFallback
             src={mod.imageURL}
             alt={stripDiscordEmoji(mod.name)}
