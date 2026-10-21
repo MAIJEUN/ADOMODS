@@ -109,7 +109,7 @@ const ko = {
   "footer.source": "사이트 소스 코드 (GitHub)",
   "footer.data": "모드 데이터 출처 (bot.adofai.gg)",
   "footer.disclaimer":
-    "ADOMODS는 비공식 팬 사이트입니다. A Dance of Fire and Ice는 7th Beat Games의 게임이며, 각 모드의 권리는 제작자에게 있습니다.",
+    "ADOMODS는 7th Beat Games 또는 ADOFAI.gg에서 제작되거나 승인받지 않았습니다. (ADOMODS is not created nor approved by 7th Beat Games or the ADOFAI.gg.)",
 }
 
 type Key = keyof typeof ko
@@ -219,7 +219,7 @@ const en: Record<Key, string> = {
   "footer.source": "Site source code (GitHub)",
   "footer.data": "Mod data source (bot.adofai.gg)",
   "footer.disclaimer":
-    "ADOMODS is an unofficial fan site. A Dance of Fire and Ice is a game by 7th Beat Games; each mod belongs to its creator.",
+    "ADOMODS is not created nor approved by 7th Beat Games or the ADOFAI.gg.",
 }
 
 const zh: Record<Key, string> = {
@@ -327,7 +327,7 @@ const zh: Record<Key, string> = {
   "footer.source": "网站源代码（GitHub）",
   "footer.data": "模组数据来源（bot.adofai.gg）",
   "footer.disclaimer":
-    "ADOMODS 是非官方粉丝网站。冰与火之舞（A Dance of Fire and Ice）是 7th Beat Games 的游戏，各模组的权利归其作者所有。",
+    "ADOMODS 并非由 7th Beat Games 或 ADOFAI.gg 制作或认可。(ADOMODS is not created nor approved by 7th Beat Games or the ADOFAI.gg.)",
 }
 
 export type TranslationKey = Key
