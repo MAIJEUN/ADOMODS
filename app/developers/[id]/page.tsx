@@ -26,7 +26,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const id = decodeId((await params).id)
   const name = (await getDeveloperMods(id)).find((mod) => mod.cachedUsername)?.cachedUsername
   if (name) {
-    return { title: name, description: `${name}님이 만든 얼불춤(A Dance of Fire and Ice) 모드 목록` }
+    return {
+      title: name,
+      description: `${name}님이 만든 얼불춤(A Dance of Fire and Ice) 모드 목록`,
+      alternates: { canonical: `/developers/${encodeURIComponent(id)}` },
+    }
   }
   return { title: "개발자" }
 }

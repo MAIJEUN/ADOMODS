@@ -7,6 +7,7 @@ export const revalidate = 300
 export const metadata: Metadata = {
   title: "개발자",
   description: "얼불춤(A Dance of Fire and Ice) 모드 개발자 목록",
+  alternates: { canonical: "/developers" },
 }
 
 export default async function DevelopersPage() {

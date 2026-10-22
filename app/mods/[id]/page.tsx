@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import ModPage from "@/components/mod-page"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { safeExternalUrl } from "@/lib/image-proxy"
-import { getModId, getModsSafe } from "@/lib/mods"
+import { getModHref, getModId, getModsSafe } from "@/lib/mods"
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -51,6 +51,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: { canonical: getModHref(mod) },
+    // The bot marks some entries as not meant for search
+    robots: mod.hideFromSearch ? { index: false } : undefined,
     openGraph: {
       title,
       description,

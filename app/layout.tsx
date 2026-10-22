@@ -10,24 +10,42 @@ import { ScrollToTop } from "@/components/scroll-to-top"
 import { SiteFooter } from "@/components/site-footer"
 import { InfoTab } from "@/components/info-tab"
 import { NavigationTracker } from "@/components/back-button"
+import { siteUrl } from "@/lib/site"
 import "./globals.css"
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
 
-// Absolute base for link previews (og:image, og:url); Vercel provides the production domain
-const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-  : "http://localhost:3000"
+const description =
+  "얼불춤(A Dance of Fire and Ice, ADOFAI) 모드 목록. 최신 모드를 검색하고 버전별로 바로 다운로드하세요."
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "ADOMODS - A Dance of Fire and Ice Mods",
+    default: "ADOMODS - 얼불춤 모드 목록 | A Dance of Fire and Ice Mods",
     template: "%s - ADOMODS",
   },
-  description: "얼불춤 모드 리스트를 시각적으로 편리하게 확인하세요",
+  description,
+  applicationName: "ADOMODS",
+  keywords: ["얼불춤", "얼불춤 모드", "A Dance of Fire and Ice", "ADOFAI", "ADOFAI mods", "모드", "mod"],
   generator: "v0.app",
+  openGraph: {
+    type: "website",
+    siteName: "ADOMODS",
+    locale: "ko_KR",
+    title: "ADOMODS - 얼불춤 모드 목록",
+    description,
+    images: ["/logo.png"],
+  },
+  twitter: { card: "summary", title: "ADOMODS - 얼불춤 모드 목록", description },
+  // Ownership checks for Google Search Console, Naver Search Advisor and Bing Webmaster Tools
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+    other: {
+      ...(process.env.NAVER_SITE_VERIFICATION && { "naver-site-verification": process.env.NAVER_SITE_VERIFICATION }),
+      ...(process.env.BING_SITE_VERIFICATION && { "msvalidate.01": process.env.BING_SITE_VERIFICATION }),
+    },
+  },
   // ?v= busts browsers' favicon cache when the icons change
   icons: {
     icon: [
