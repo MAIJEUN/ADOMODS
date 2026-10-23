@@ -81,7 +81,6 @@ export const translations: Record<Language, TranslationData> = {
     "refresh.refreshing": "새로고침 중...",
 
     // 푸터
-    "footer.allRightsReserved": "모든 권리 보유.",
     "footer.license": "라이센스",
     "footer.sourceCode": "소스 코드",
     "footer.gameDisclaimer": "ADOMODS는 7th Beat Games에서 제작되거나 승인받지 않았습니다.",
@@ -154,7 +153,6 @@ export const translations: Record<Language, TranslationData> = {
     "refresh.refreshing": "Refreshing...",
 
     // Footer
-    "footer.allRightsReserved": "All rights reserved.",
     "footer.license": "License",
     "footer.sourceCode": "Source Code",
     "footer.gameDisclaimer": "ADOMODS is not made or endorsed by 7th Beat Games.",

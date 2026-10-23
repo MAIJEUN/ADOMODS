@@ -9,7 +9,6 @@ import { FooterHandle } from "@/components/footer-handle"
 export function Footer() {
   const { t } = useLanguage()
   const [isExpanded, setIsExpanded] = useState(false)
-  const currentYear = new Date().getFullYear()
 
   const toggleExpanded = () => setIsExpanded(!isExpanded)
 
@@ -30,9 +29,6 @@ export function Footer() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-col items-center md:items-start">
-            <p className="text-sm text-muted-foreground">
-              &copy; {currentYear} MAIJSOFT Dev. {t("footer.allRightsReserved")}
-            </p>
             <p className="text-sm text-muted-foreground">
               {t("footer.license")}:{" "}
               <Link
