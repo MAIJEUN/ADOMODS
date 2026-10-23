@@ -108,6 +108,7 @@ const ko = {
   "footer.links": "정보",
   "footer.source": "사이트 소스 코드 (GitHub)",
   "footer.data": "모드 데이터 출처 (bot.adofai.gg)",
+  "footer.legacy": "이전 버전 사이트",
   "footer.disclaimer":
     "ADOMODS는 7th Beat Games 또는 ADOFAI.gg에서 제작되거나 승인받지 않았습니다.",
 }
@@ -218,6 +219,7 @@ const en: Record<Key, string> = {
   "footer.links": "Links",
   "footer.source": "Site source code (GitHub)",
   "footer.data": "Mod data source (bot.adofai.gg)",
+  "footer.legacy": "Previous version of the site",
   "footer.disclaimer":
     "ADOMODS is not created nor approved by 7th Beat Games or the ADOFAI.gg.",
 }
@@ -326,6 +328,7 @@ const zh: Record<Key, string> = {
   "footer.links": "相关链接",
   "footer.source": "网站源代码（GitHub）",
   "footer.data": "模组数据来源（bot.adofai.gg）",
+  "footer.legacy": "旧版网站",
   "footer.disclaimer":
     "ADOMODS 并非由 7th Beat Games 或 ADOFAI.gg 制作或认可。",
 }

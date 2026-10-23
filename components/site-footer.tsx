@@ -1,12 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Check, Copy, Database, Github, MessageCircle } from "lucide-react"
+import { Check, Copy, Database, Github, History, MessageCircle } from "lucide-react"
 import { useT } from "@/lib/use-lang"
 
 const DISCORD_CONTACT = "maijeun"
 const GITHUB_URL = "https://github.com/MAIJEUN/ADOMODS"
 const DATA_URL = "https://bot.adofai.gg/api/mods/"
+const LEGACY_URL = "https://legacy.adomods.kro.kr"
 
 // Discord handles can't be linked to without the user ID, so the handle is copied instead
 function DiscordContact() {
@@ -78,6 +79,12 @@ export function FooterSections({ className }: { className?: string }) {
             <a href={DATA_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
               <Database className="h-4 w-4" />
               {t("footer.data")}
+            </a>
+          </li>
+          <li>
+            <a href={LEGACY_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
+              <History className="h-4 w-4" />
+              {t("footer.legacy")}
             </a>
           </li>
         </ul>
