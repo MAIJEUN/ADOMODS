@@ -85,6 +85,13 @@ export const translations: Record<Language, TranslationData> = {
     "footer.sourceCode": "소스 코드",
     "footer.gameDisclaimer": "ADOMODS는 7th Beat Games에서 제작되거나 승인받지 않았습니다.",
     "footer.siteDisclaimer": "ADOMODS는 ADOFAI.gg에서 제작되거나 승인받지 않았습니다.",
+
+    // 이전 버전 안내
+    "legacy.title": "이전 버전 사이트입니다",
+    "legacy.notice": "지금 보고 있는 사이트는 ADOMODS의 이전 버전입니다. 새로운 기능과 최신 정보는 최신 버전에서 확인할 수 있어요.",
+    "legacy.stay": "이전 버전 계속 보기",
+    "legacy.dontShowAgain": "다시 보지 않기",
+    "legacy.goLatest": "최신 버전으로 이동",
   },
   en: {
     // Common
@@ -157,6 +164,13 @@ export const translations: Record<Language, TranslationData> = {
     "footer.sourceCode": "Source Code",
     "footer.gameDisclaimer": "ADOMODS is not made or endorsed by 7th Beat Games.",
     "footer.siteDisclaimer": "ADOMODS is not made or endorsed by ADOFAI.gg.",
+
+    // Legacy notice
+    "legacy.title": "This is the previous version",
+    "legacy.notice": "You are viewing an older version of ADOMODS. New features and the latest info are on the current site.",
+    "legacy.stay": "Stay on the old version",
+    "legacy.dontShowAgain": "Don't show this again",
+    "legacy.goLatest": "Go to the latest version",
   },
 }
 

@@ -5,6 +5,7 @@ import "./globals.css"
 import { ModsProvider } from "@/components/mods-provider"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { LatestSiteNotice } from "@/components/latest-site-notice"
 import { ThemeProvider } from "@/components/theme-provider"
 import { LanguageProvider } from "@/components/language-provider"
 
@@ -30,6 +31,7 @@ export default function RootLayout({
               <Header />
               <main className="flex-grow pb-8">{children}</main>
               <Footer />
+              <LatestSiteNotice />
             </ModsProvider>
           </LanguageProvider>
         </ThemeProvider>

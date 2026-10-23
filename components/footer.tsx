@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Github } from "lucide-react"
+import { ExternalLink, Github } from "lucide-react"
 import { useLanguage } from "@/components/language-provider"
 import { useState } from "react"
 import { FooterHandle } from "@/components/footer-handle"
@@ -54,6 +54,13 @@ export function Footer() {
               <Github className="h-4 w-4" />
               <span>{t("footer.sourceCode")}</span>
             </Link>
+            <a
+              href="https://adomods.kro.kr"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span>{t("legacy.goLatest")}</span>
+            </a>
           </div>
         </div>
       </div>
