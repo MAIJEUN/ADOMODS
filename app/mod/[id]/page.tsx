@@ -8,7 +8,7 @@ import { format } from "date-fns"
 import { ko, enUS } from "date-fns/locale"
 import { useMods } from "@/components/mods-provider"
 import { useLanguage } from "@/components/language-provider"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 
 // 간단한 마크다운 파서 (기본 기능만 지원)
 function SimpleMarkdown({ content }: { content: string }) {
@@ -44,7 +44,9 @@ function SimpleMarkdown({ content }: { content: string }) {
   }
 }
 
-export default function ModPage({ params }: { params: { id: string } }) {
+export default function ModPage() {
+  // Next.js 16 passes `params` as a Promise; read the id from the URL instead
+  const params = useParams<{ id: string }>()
   const { isLoading: isModsLoading, error: modsError, getMod } = useMods()
   const { language, t } = useLanguage()
   const [mod, setMod] = useState<any>(null)

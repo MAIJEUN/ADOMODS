@@ -197,7 +197,7 @@ export function ModsProvider({ children }: { children: ReactNode }) {
   const getMod = async (id: string) => {
     try {
       // 먼저 현재 로드된 모드 목록에서 찾기
-      const foundMod = mods.find((mod) => mod.id === id)
+      const foundMod = mods.find((mod) => String(mod.id) === id || mod._id === id)
       if (foundMod) {
         return foundMod
       }
