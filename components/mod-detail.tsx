@@ -15,21 +15,29 @@ import { DeveloperAvatar, DeveloperLink } from "@/components/developer"
 import { DiscordText, ImageWithFallback, ModDescription } from "@/components/mod-markdown"
 import { FavoriteButton } from "@/components/mod-card"
 import { OlderVersionNotice, useModVersion, VersionPicker, type ModVersionState } from "@/components/mod-version"
+import { TranslateButton, TranslationNotice, useDescriptionTranslation } from "@/components/mod-translate"
 
 // Main column: what the mod is (description and reference image)
 function ModDetailMain({ mod, versionState }: { mod: Mod; versionState: ModVersionState }) {
   const { t } = useT()
+  const translation = useDescriptionTranslation(mod)
 
   return (
     <div className={`max-w-none [&>*]:break-words ${versionState.loading ? "opacity-60" : ""}`}>
       {mod.description && (
         <>
-          <h3 className="mb-2 flex items-center gap-2 text-lg font-bold">
-            {t("detail.description")}
-            {/* Makes clear the text below belongs to the older version picked in the sidebar */}
-            {!versionState.isLatest && <Badge variant="outline">v{mod.version}</Badge>}
-          </h3>
-          <ModDescription description={mod.description} />
+          <div className="mb-2 flex items-center gap-2">
+            <h3 className="flex items-center gap-2 text-lg font-bold">
+              {t("detail.description")}
+              {/* Makes clear the text below belongs to the older version picked in the sidebar */}
+              {!versionState.isLatest && <Badge variant="outline">v{mod.version}</Badge>}
+            </h3>
+            <TranslateButton translation={translation} />
+          </div>
+          <TranslationNotice translation={translation} />
+          <div className={translation.loading ? "opacity-60" : undefined}>
+            <ModDescription description={translation.text ?? mod.description} />
+          </div>
         </>
       )}
 
