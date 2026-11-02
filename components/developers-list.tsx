@@ -38,7 +38,7 @@ export default function DevelopersList({ initialMods }: { initialMods?: Mod[] })
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="mr-auto text-2xl font-bold">{t("devs.title")}</h2>
+        <h1 className="mr-auto text-2xl font-bold">{t("devs.title")}</h1>
         <Badge variant="secondary" className="px-3 py-1">
           {t("devs.count", { n: shown.length })}
         </Badge>

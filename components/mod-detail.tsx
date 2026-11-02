@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Check, ExternalLink, Github, Link2, Loader2, MessageSquare } from "lucide-react"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
-import { formatDate, getDiscordMessageUrl, getDownloadUrl, getModHref, getModId, type Mod } from "@/lib/mods"
+import { findModByKey, formatDate, getDiscordMessageUrl, getDownloadUrl, getModHref, type Mod } from "@/lib/mods"
 import { getSourceRepoUrl } from "@/lib/source-repo"
 import { useT } from "@/lib/use-lang"
 import { DownloadButton } from "@/components/download-button"
@@ -252,7 +252,7 @@ export function useModDialog(mods: Mod[]) {
   const match = MOD_PATH.exec(pathname)
   const openId = match ? decodeSegment(match[1]) : null
   const current = useMemo(
-    () => (openId ? (mods.find((mod) => getModId(mod) === openId) ?? null) : null),
+    () => (openId ? (findModByKey(mods, openId) ?? null) : null),
     [openId, mods],
   )
 

@@ -110,9 +110,19 @@ export function getModVersions(mod: Mod): ModVersion[] {
   return [...versions].sort((a, b) => (b.uploadedTimestamp || 0) - (a.uploadedTimestamp || 0))
 }
 
-// Stable identifier used in /mods/[id] URLs and for favorites
+// Identifier used for favorites
 export const getModId = (mod: Mod) => String(mod._id ?? mod.id)
-export const getModHref = (mod: Mod) => `/mods/${encodeURIComponent(getModId(mod))}`
+
+// Mod pages are addressed by name: the bot keys mods by name, it doesn't change with new versions, and
+// it reads well in search results
+export const getModHref = (mod: Mod) => `/mods/${encodeURIComponent(mod.name)}`
+
+// The mod a /mods/[key] URL points to: by name, or by the ID older links used. A listed entry wins over a
+// hidden one with the same name.
+export const findModByKey = (mods: Mod[], key: string) =>
+  mods.find((mod) => mod.name === key && isListedMod(mod)) ??
+  mods.find((mod) => mod.name === key) ??
+  mods.find((mod) => getModId(mod) === key)
 
 const DAY_MS = 24 * 60 * 60 * 1000
 export const NEW_MOD_DAYS = 7

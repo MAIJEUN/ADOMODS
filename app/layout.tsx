@@ -77,9 +77,10 @@ export default function RootLayout({
                   className="h-10 w-10 object-contain sm:h-[60px] sm:w-[60px]"
                 />
                 <div>
-                  <h1 className="text-2xl font-bold text-balance sm:text-3xl">
+                  {/* Not a heading: each page has its own h1 */}
+                  <p className="text-2xl font-bold text-balance sm:text-3xl">
                     <span className="text-primary">ADO</span>MODS
-                  </h1>
+                  </p>
                   <p className="hidden text-sm text-muted-foreground mt-1 sm:block">A Dance of Fire and Ice Mods</p>
                 </div>
               </Link>

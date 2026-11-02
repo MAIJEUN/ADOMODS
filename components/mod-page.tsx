@@ -2,7 +2,7 @@
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
-import { getModId, type Mod } from "@/lib/mods"
+import { findModByKey, type Mod } from "@/lib/mods"
 import { useT } from "@/lib/use-lang"
 import { BackButton } from "@/components/back-button"
 import { useMods } from "@/components/mod-card"
@@ -13,7 +13,7 @@ import { DiscordText } from "@/components/mod-markdown"
 export default function ModPage({ modId, initialMods }: { modId: string; initialMods?: Mod[] }) {
   const { t } = useT()
   const { mods, isLoading } = useMods(initialMods)
-  const mod = mods.find((m) => getModId(m) === modId)
+  const mod = findModByKey(mods, modId)
 
   return (
     <div className="space-y-6">
@@ -42,9 +42,9 @@ export default function ModPage({ modId, initialMods }: { modId: string; initial
 function ModPageContent({ mod }: { mod: Mod }) {
   return (
     <article className="space-y-6">
-      <h2 className="border-b border-border pb-5 text-3xl font-bold md:text-4xl">
+      <h1 className="border-b border-border pb-5 text-3xl font-bold md:text-4xl">
         <DiscordText text={mod.name} />
-      </h2>
+      </h1>
       <ModDetailView mod={mod} variant="page" />
     </article>
   )

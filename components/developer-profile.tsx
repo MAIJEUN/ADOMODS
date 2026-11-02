@@ -69,7 +69,7 @@ export default function DeveloperProfile({ developerId, initialMods }: { develop
           <section className="flex flex-col gap-6 sm:flex-row sm:items-center">
             {avatarMod && <DeveloperAvatar mod={avatarMod} size="lg" />}
             <div className="min-w-0 flex-1 space-y-2">
-              <h2 className="text-3xl font-bold break-words">{name}</h2>
+              <h1 className="text-3xl font-bold break-words">{name}</h1>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <Package className="h-4 w-4" />
