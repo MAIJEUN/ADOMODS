@@ -27,11 +27,11 @@ function ModDetailMain({ mod, versionState }: { mod: Mod; versionState: ModVersi
       {mod.description && (
         <>
           <div className="mb-2 flex items-center gap-2">
-            <h3 className="flex items-center gap-2 text-lg font-bold">
+            <h2 className="flex items-center gap-2 text-lg font-bold">
               {t("detail.description")}
               {/* Makes clear the text below belongs to the older version picked in the sidebar */}
               {!versionState.isLatest && <Badge variant="outline">v{mod.version}</Badge>}
-            </h3>
+            </h2>
             <TranslateButton translation={translation} />
           </div>
           <TranslationNotice translation={translation} />
@@ -87,7 +87,7 @@ function CopyLinkButton({ mod, className }: { mod: Mod; className?: string }) {
 function SidebarSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
       {children}
     </section>
   )
@@ -108,19 +108,9 @@ function ExternalRow({ href, icon, label }: { href: string; icon: ReactNode; lab
   )
 }
 
-// Sidebar: everything you do with the mod (download, version, info, links)
-function ModDetailSidebar({
-  latestMod,
-  mod,
-  versionState,
-}: {
-  latestMod: Mod
-  mod: Mod
-  versionState: ModVersionState
-}) {
-  const { t, locale } = useT()
-  const discordUrl = getDiscordMessageUrl(mod)
-  const sourceUrl = getSourceRepoUrl(mod)
+// Sidebar, top: download and version
+function ModDetailActions({ mod, versionState }: { mod: Mod; versionState: ModVersionState }) {
+  const { t } = useT()
   const hasHistory = versionState.versions.length > 1
 
   return (
@@ -147,6 +137,18 @@ function ModDetailSidebar({
           <p className="text-sm font-medium">{mod.version ?? t("common.unknownDate")}</p>
         )}
       </SidebarSection>
+    </div>
+  )
+}
+
+// Sidebar, below: info, links, favorite and share
+function ModDetailMeta({ latestMod, mod }: { latestMod: Mod; mod: Mod }) {
+  const { t, locale } = useT()
+  const discordUrl = getDiscordMessageUrl(mod)
+  const sourceUrl = getSourceRepoUrl(mod)
+
+  return (
+    <div className="space-y-6">
 
       <SidebarSection title={t("detail.info")}>
         <dl className="space-y-2 text-sm">
@@ -195,33 +197,39 @@ function ModDetailSidebar({
   )
 }
 
-// Description on the left, actions on the right; below lg/md the sidebar comes first so the download is
-// right there.
+// Description on the left, sidebar on the right. On narrow screens it's one column: download and version,
+// then the description, then the rest of the sidebar (the sidebar is display: contents there, so its two
+// parts can sit on either side of the description).
 // - "dialog": fills the dialog and each column scrolls on its own, so the sidebar stays put
 // - "page": the full-width /mods/[id] page; the sidebar is its own panel that sticks below the header
 export function ModDetailView({ mod, variant }: { mod: Mod; variant: "dialog" | "page" }) {
   const versionState = useModVersion(mod)
   const shown = versionState.shown
-  const sidebar = <ModDetailSidebar latestMod={mod} mod={shown} versionState={versionState} />
+  const actions = <ModDetailActions mod={shown} versionState={versionState} />
+  const meta = <ModDetailMeta latestMod={mod} mod={shown} />
   const main = <ModDetailMain mod={shown} versionState={versionState} />
 
   if (variant === "page") {
+    const panel = "rounded-xl border border-border bg-card p-5 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0"
     return (
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <aside className="self-start rounded-xl border border-border bg-card p-5 lg:sticky lg:top-32 lg:order-2">
-          {sidebar}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-8">
+        <aside className="contents lg:sticky lg:top-32 lg:order-2 lg:block lg:space-y-6 lg:self-start lg:rounded-xl lg:border lg:border-border lg:bg-card lg:p-5">
+          <div className={`order-1 ${panel}`}>{actions}</div>
+          <div className={`order-3 ${panel}`}>{meta}</div>
         </aside>
-        <div className="min-w-0 lg:order-1">{main}</div>
+        <div className="order-2 min-w-0 lg:order-1">{main}</div>
       </div>
     )
   }
 
+  const section = "bg-muted/20 p-5 md:bg-transparent md:p-0"
   return (
     <div className="grid min-h-0 flex-1 overflow-y-auto md:grid-cols-[minmax(0,1fr)_18rem] md:grid-rows-[minmax(0,1fr)] md:overflow-hidden">
-      <aside className="border-b border-border bg-muted/20 p-5 md:order-2 md:overflow-y-auto md:border-b-0 md:border-l">
-        {sidebar}
+      <aside className="contents md:order-2 md:block md:space-y-6 md:overflow-y-auto md:border-l md:border-border md:bg-muted/20 md:p-5">
+        <div className={`order-1 border-b border-border md:border-0 ${section}`}>{actions}</div>
+        <div className={`order-3 border-t border-border md:border-0 ${section}`}>{meta}</div>
       </aside>
-      <div className="p-6 md:order-1 md:overflow-y-auto">{main}</div>
+      <div className="order-2 p-6 md:order-1 md:overflow-y-auto">{main}</div>
     </div>
   )
 }
@@ -230,7 +238,7 @@ function ModDetailDialogContent({ mod }: { mod: Mod }) {
   const { t } = useT()
 
   return (
-    <DialogContent className="flex h-[90vh] w-[95vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl">
+    <DialogContent className="flex max-h-[90vh] w-[95vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl">
       <DialogHeader className="flex-shrink-0 border-b border-border px-6 py-4 pr-12 text-left">
         <DialogTitle className="text-2xl">
           <DiscordText text={mod.name} />

@@ -80,7 +80,8 @@ function Spoiler({ children }: { children?: ReactNode }) {
         }
       }}
     >
-      {children}
+      {/* Hidden from screen readers too until revealed; the label says what the button does */}
+      <span aria-hidden>{children}</span>
     </span>
   )
 }
@@ -186,7 +187,13 @@ const detailMarkdownComponents: Components = {
   ),
   code: ({ node, ...props }) => <code className="bg-muted px-1.5 py-0.5 rounded text-sm break-all" {...props} />,
   a: ({ node, ...props }) => (
-    <a className="text-primary hover:underline break-all" target="_blank" rel="noopener noreferrer" {...props} />
+    // Underlined, not just colored, so links stand out in running text
+    <a
+      className="text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary break-all"
+      target="_blank"
+      rel="noopener noreferrer"
+      {...props}
+    />
   ),
   img: ({ node, className, src, alt }) =>
     className?.includes("discord-emoji") ? (

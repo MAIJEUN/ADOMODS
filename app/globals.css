@@ -16,8 +16,9 @@
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.27 0 0);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.7 0.15 230);
-  --accent-foreground: oklch(0.145 0 0);
+  /* Hover and highlighted-item background: a subtle gray, so muted and primary text on it stay readable */
+  --accent: oklch(0.25 0 0);
+  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.27 0 0);
@@ -52,8 +53,9 @@
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.27 0 0);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.7 0.15 230);
-  --accent-foreground: oklch(0.145 0 0);
+  /* Hover and highlighted-item background: a subtle gray, so muted and primary text on it stay readable */
+  --accent: oklch(0.25 0 0);
+  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.27 0 0);
@@ -116,6 +118,12 @@
 }
 
 @layer base {
+  /* Korean wraps between words, not inside them. Only for the Korean UI: keep-all leaves Chinese text
+     nowhere to wrap but the line end, which overflow-wrap then breaks */
+  html:lang(ko) body {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
   /* The site is dark-only: tells the browser to draw dark native scrollbars and form controls */
   :root {
     color-scheme: dark;
