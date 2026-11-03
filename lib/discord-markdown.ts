@@ -146,15 +146,12 @@ function splitInline(value: string, lang: Lang): MdNode[] {
           { type: "text", value: formatDiscordTimestamp(lang, seconds, tsStyle) },
         ]),
       )
+    } else if (userId) {
+      // Shown as @ID, or the name when the user uploaded a mod (resolved when rendering, components/mod-markdown)
+      nodes.push(element("span", { className: MENTION_CLASS, dataUserId: userId }, [{ type: "text", value: `@${userId}` }]))
     } else {
-      // IDs can't be resolved to names without the Discord API
-      const label = userId
-        ? translate(lang, "md.user")
-        : roleId
-          ? translate(lang, "md.role")
-          : channelId
-            ? translate(lang, "md.channel")
-            : raw
+      // Role and channel IDs can't be resolved to names without the Discord API
+      const label = roleId ? translate(lang, "md.role") : channelId ? translate(lang, "md.channel") : raw
       nodes.push(element("span", { className: MENTION_CLASS }, [{ type: "text", value: label }]))
     }
   }

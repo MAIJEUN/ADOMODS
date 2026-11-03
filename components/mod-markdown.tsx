@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, type ReactElement, type ReactNode } from "react"
+import { Download, FileArchive } from "lucide-react"
 import ReactMarkdown, { type Components } from "react-markdown"
 import { proxyImage } from "@/lib/image-proxy"
 import {
@@ -11,6 +12,8 @@ import {
 } from "@/lib/discord-markdown"
 import { useT } from "@/lib/use-lang"
 import { useImageFallback } from "@/components/use-image-fallback"
+import { getUploaderName } from "@/lib/mentions"
+import { getLinkPreview, openableHref, type LinkPreview } from "@/lib/link-preview"
 
 export function ImageWithFallback({
   src,
@@ -86,16 +89,29 @@ function Spoiler({ children }: { children?: ReactNode }) {
   )
 }
 
+// <@id>: the uploader's name and profile when they uploaded a mod, otherwise the ID
+function UserMention({ id, className }: { id: string; className?: string }) {
+  const name = getUploaderName(id)
+  if (!name) return <span className={className}>@{id}</span>
+  return (
+    <a href={`/developers/${encodeURIComponent(id)}`} className={`${className ?? ""} hover:underline`}>
+      @{name}
+    </a>
+  )
+}
+
 // Discord-only elements produced by lib/discord-markdown
 const discordComponents: Components = {
-  span: ({ node, className, children, ...props }) =>
-    className?.includes("discord-spoiler") ? (
-      <Spoiler>{children}</Spoiler>
-    ) : (
+  span: ({ node, className, children, ...props }) => {
+    if (className?.includes("discord-spoiler")) return <Spoiler>{children}</Spoiler>
+    const userId = (props as Record<string, unknown>)["data-user-id"]
+    if (typeof userId === "string") return <UserMention id={userId} className={className} />
+    return (
       <span className={className} {...props}>
         {children}
       </span>
-    ),
+    )
+  },
   blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-border pl-3 my-1" {...props} />,
   hr: () => <hr className="my-3 border-border" />,
 }
@@ -138,6 +154,76 @@ export function DiscordText({ text }: { text: string }) {
   return <>{parts}</>
 }
 
+// Underlined, not just colored, so links stand out in running text
+function TextLink({ href, children }: { href?: string; children?: ReactNode }) {
+  return (
+    <a
+      href={href && openableHref(href)}
+      className="text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary break-all"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {children}
+    </a>
+  )
+}
+
+// Spans, not divs: links sit inside paragraphs
+function LinkPreviewBlock({ preview, fallback }: { preview: LinkPreview; fallback: ReactElement }) {
+  const { failed, ref, onError } = useImageFallback()
+  const { t } = useT()
+  const href = openableHref(preview.url)
+  // Shown as the plain link when the image or video can't be loaded (expired or deleted)
+  if (failed) return fallback
+
+  if (preview.kind === "file") {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={preview.url}
+        data-link-preview
+        className="my-1 flex w-fit max-w-full items-center gap-3 rounded-md border border-border bg-muted/40 px-3 py-2 hover:bg-muted"
+      >
+        <FileArchive aria-hidden className="h-5 w-5 shrink-0 text-muted-foreground" />
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-medium">{preview.fileName}</span>
+          <span className="block truncate text-xs text-muted-foreground">{preview.host}</span>
+        </span>
+        <Download aria-hidden className="h-4 w-4 shrink-0 text-primary" />
+      </a>
+    )
+  }
+
+  return (
+    <span data-link-preview className="my-2 block">
+      {preview.kind === "image" ? (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="inline-block max-w-full">
+          <img
+            src={proxyImage(preview.url)}
+            alt={t("detail.imageAlt")}
+            loading="lazy"
+            decoding="async"
+            ref={ref}
+            onError={onError}
+            className="max-h-96 max-w-full rounded-md border border-border"
+          />
+        </a>
+      ) : (
+        // Through the re-signing redirect too: <video> follows it
+        <video
+          src={href}
+          controls
+          preload="metadata"
+          onError={onError}
+          className="max-h-96 max-w-full rounded-md border border-border"
+        />
+      )}
+    </span>
+  )
+}
+
 // Compact rendering for the card preview (inside a 2-line clamp); blocks become inline spans
 const previewMarkdownComponents: Components = {
   ...discordComponents,
@@ -173,7 +259,8 @@ const detailMarkdownComponents: Components = {
   h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-4 mb-2" {...props} />,
   h2: ({ node, ...props }) => <h2 className="text-xl font-bold mt-3 mb-2" {...props} />,
   h3: ({ node, ...props }) => <h3 className="text-lg font-bold mt-3 mb-1" {...props} />,
-  p: ({ node, ...props }) => <p className="mb-2 break-words" {...props} />,
+  // A preview is a block of its own, so the line break after its URL would only add a gap
+  p: ({ node, ...props }) => <p className="mb-2 break-words [&_[data-link-preview]+br]:hidden" {...props} />,
   ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />,
   ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-2 space-y-1" {...props} />,
   li: ({ node, ...props }) => <li className="break-words" {...props} />,
@@ -186,15 +273,13 @@ const detailMarkdownComponents: Components = {
     />
   ),
   code: ({ node, ...props }) => <code className="bg-muted px-1.5 py-0.5 rounded text-sm break-all" {...props} />,
-  a: ({ node, ...props }) => (
-    // Underlined, not just colored, so links stand out in running text
-    <a
-      className="text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary break-all"
-      target="_blank"
-      rel="noopener noreferrer"
-      {...props}
-    />
-  ),
+  a: ({ node, href, children }) => {
+    const link = <TextLink href={href}>{children}</TextLink>
+    // A bare URL to an image, video or file is shown as that instead of the address
+    const text = node?.children.length === 1 && node.children[0].type === "text" ? node.children[0].value : null
+    const preview = text !== null && text === href ? getLinkPreview(href) : null
+    return preview ? <LinkPreviewBlock preview={preview} fallback={link} /> : link
+  },
   img: ({ node, className, src, alt }) =>
     className?.includes("discord-emoji") ? (
       renderEmoji(src, alt)

@@ -9,6 +9,7 @@ import { Calendar, Hash, Info, Star } from "lucide-react"
 import { proxyImage } from "@/lib/image-proxy"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { useFavorites } from "@/lib/favorites"
+import { rememberUploaderNames } from "@/lib/mentions"
 import {
   formatDate,
   getDownloadUrl,
@@ -40,7 +41,12 @@ export function useMods(initialMods?: Mod[]) {
     revalidateOnMount: !hasInitial,
   })
   // Memoized so the fallback [] doesn't create a new array (and re-run every memo downstream) on each render
-  const mods = useMemo(() => normalizeMods(data), [data])
+  const mods = useMemo(() => {
+    const list = normalizeMods(data)
+    // Lets mentions of these uploaders in descriptions show their names
+    rememberUploaderNames(list)
+    return list
+  }, [data])
   return { mods, error: error as Error | undefined, isLoading }
 }
 

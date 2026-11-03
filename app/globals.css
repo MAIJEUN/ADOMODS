@@ -117,6 +117,26 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Dialog close: explicit "from" values, since the closed state itself is opacity 0 (see ui/dialog.tsx) */
+@keyframes dialog-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes dialog-zoom-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
 @layer base {
   /* Korean wraps between words, not inside them. Only for the Korean UI: keep-all leaves Chinese text
      nowhere to wrap but the line end, which overflow-wrap then breaks */

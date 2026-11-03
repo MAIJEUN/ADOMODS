@@ -3,6 +3,7 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 import { findModByKey, type Mod } from "@/lib/mods"
+import { rememberNames } from "@/lib/mentions"
 import { useT } from "@/lib/use-lang"
 import { BackButton } from "@/components/back-button"
 import { useMods } from "@/components/mod-card"
@@ -10,8 +11,17 @@ import { ModDetailView } from "@/components/mod-detail"
 import { DiscordText } from "@/components/mod-markdown"
 
 // Standalone page for a shared /mods/[id] link
-export default function ModPage({ modId, initialMods }: { modId: string; initialMods?: Mod[] }) {
+export default function ModPage({
+  modId,
+  initialMods,
+  mentionNames,
+}: {
+  modId: string
+  initialMods?: Mod[]
+  mentionNames?: Record<string, string>
+}) {
   const { t } = useT()
+  if (mentionNames) rememberNames(mentionNames)
   const { mods, isLoading } = useMods(initialMods)
   const mod = findModByKey(mods, modId)
 

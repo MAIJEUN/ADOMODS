@@ -5,6 +5,7 @@ import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { proxyImage } from "@/lib/image-proxy"
 import { findModByKey, getDownloadUrl, getModHref, getModsSafe, type Mod } from "@/lib/mods"
 import { siteUrl } from "@/lib/site"
+import { getMentionedUploaderNames } from "@/lib/mentions"
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -131,7 +132,12 @@ export default async function ModRoute({ params }: Props) {
   return (
     <>
       {mod && !mod.hideFromSearch && <ModJsonLd mod={mod} />}
-      <ModPage modId={key} initialMods={mod ? [mod] : undefined} />
+      <ModPage
+        modId={key}
+        initialMods={mod ? [mod] : undefined}
+        // Only this mod is sent with the page; these let its mentions of other uploaders show names
+        mentionNames={getMentionedUploaderNames(mod?.description, mods)}
+      />
     </>
   )
 }
