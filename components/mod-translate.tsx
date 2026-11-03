@@ -32,7 +32,7 @@ export function useDescriptionTranslation(mod: Mod): DescriptionTranslation {
   const { lang } = useT()
   const description = mod.description ?? ""
   // v changes when the API starts answering differently, so CDN-cached answers aren't reused
-  const key = `/api/translate?${new URLSearchParams({ name: mod.name, version: mod.version ?? "", lang, v: "3" })}`
+  const key = `/api/translate?${new URLSearchParams({ name: mod.name, version: mod.version ?? "", lang, v: "4" })}`
   // Switched on for one mod, version and language; picking another one shows its original text again
   const [activeKey, setActiveKey] = useState<string | null>(null)
   const active = activeKey === key

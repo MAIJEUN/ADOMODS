@@ -23,3 +23,37 @@ export function needsTranslation(text: string, lang: Lang) {
   const share = scriptShare(text, lang)
   return share !== null && share < 0.7
 }
+
+// Letters and digits only, so two lines that differ only in emoji, punctuation or Markdown compare equal
+const lineKey = (line: string) => line.replace(/<a?:\w+:\d+>/g, "").replace(/[^\p{L}\p{N}]/gu, "").toLowerCase()
+
+// Where a description gave a sentence in two languages, both copies can come back as the same sentence;
+// keep the first. Lines in code blocks are left alone.
+export function dropRepeatedLines(text: string) {
+  const out: string[] = []
+  let inCode = false
+  let previousKey = ""
+  for (const line of text.split("\n")) {
+    if (line.trimStart().startsWith("```")) inCode = !inCode
+    const key = inCode ? "" : lineKey(line)
+    if (key && key === previousKey) continue
+    out.push(line)
+    if (key) previousKey = key
+    else if (line.trim()) previousKey = ""
+  }
+  return out.join("\n")
+}
+
+// Lines of the reply that still read as another language: long enough to tell, and almost nothing in the
+// target language's script. (Names alone rarely fill a line long enough to count.)
+export function countUntranslatedLines(text: string, lang: Lang) {
+  let inCode = false
+  let count = 0
+  for (const line of text.split("\n")) {
+    if (line.trimStart().startsWith("```")) inCode = !inCode
+    if (inCode) continue
+    const share = scriptShare(line, lang)
+    if (share !== null && share < 0.2) count++
+  }
+  return count
+}
