@@ -27,18 +27,18 @@ Translate the description into the language the user names, so that it renders e
 
 Reply with the translated description only, without any preface, notes, or a code fence around it.`
 
+// Haiku is plenty for translation
+const MODEL = "claude-haiku-5-5"
+
 let client: Anthropic | null = null
 const getClient = () => (client ??= new Anthropic())
 
 async function requestTranslation(text: string, lang: Lang): Promise<string> {
-  const response = await getClient().beta.messages.create({
-    model: "claude-opus-5-5",
+  const response = await getClient().messages.create({
+    model: MODEL,
     max_tokens: 16000,
-    // Translation is routine work; low effort keeps it fast and cheap
+    // Low effort keeps it fast and cheap
     output_config: { effort: "low" },
-    // If the model declines (e.g. a false positive on a safety classifier), retry on a fallback model
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
     system: SYSTEM_PROMPT,
     messages: [
       {
@@ -58,10 +58,11 @@ async function requestTranslation(text: string, lang: Lang): Promise<string> {
   return translated
 }
 
-// Cached by content, so each description is translated once per language (until it's edited)
+// Cached by content, so each description is translated once per language (until it's edited or the
+// model changes)
 export function translateDescription(text: string, lang: Lang): Promise<string> {
   const hash = createHash("sha256").update(text).digest("hex")
-  return unstable_cache(() => requestTranslation(text, lang), ["mod-translation-v1", lang, hash], {
+  return unstable_cache(() => requestTranslation(text, lang), ["mod-translation", MODEL, lang, hash], {
     revalidate: false,
   })()
 }
