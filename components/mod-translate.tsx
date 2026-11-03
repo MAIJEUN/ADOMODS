@@ -4,29 +4,12 @@ import { useState } from "react"
 import useSWRImmutable from "swr/immutable"
 import { Button } from "@/components/ui/button"
 import { Languages, Loader2 } from "lucide-react"
-import type { Lang } from "@/lib/i18n"
+import { needsTranslation } from "@/lib/language"
 import type { Mod } from "@/lib/mods"
 import { useT } from "@/lib/use-lang"
 
 // Inlined at build time from whether ANTHROPIC_API_KEY is set (next.config.mjs)
 const TRANSLATION_ENABLED = process.env.NEXT_PUBLIC_TRANSLATION_ENABLED === "1"
-
-const SCRIPT: Record<Lang, RegExp> = {
-  ko: /[가-힣]/g,
-  zh: /[一-鿿]/g,
-  en: /[a-z]/gi,
-}
-
-// Whether a good part of the text is in a script other than the reader's. Hangul and Han characters
-// count double: one carries about as much as a short Latin word.
-export function needsTranslation(text: string, lang: Lang) {
-  const plain = text
-    .replace(/```[\s\S]*?```|`[^`]*`/g, " ")
-    .replace(/https?:\/\/\S+|<a?:\w+:\d+>|<[@#][!&]?\d+>/g, " ")
-  const count = (re: RegExp) => (plain.match(re)?.length ?? 0) * (re === SCRIPT.en ? 1 : 2)
-  const total = count(SCRIPT.ko) + count(SCRIPT.zh) + count(SCRIPT.en)
-  return total >= 20 && count(SCRIPT[lang]) / total < 0.7
-}
 
 const fetcher = async (url: string): Promise<string> => {
   const res = await fetch(url)
@@ -48,7 +31,8 @@ export interface DescriptionTranslation {
 export function useDescriptionTranslation(mod: Mod): DescriptionTranslation {
   const { lang } = useT()
   const description = mod.description ?? ""
-  const key = `/api/translate?${new URLSearchParams({ name: mod.name, version: mod.version ?? "", lang })}`
+  // v changes when the API starts answering differently, so CDN-cached answers aren't reused
+  const key = `/api/translate?${new URLSearchParams({ name: mod.name, version: mod.version ?? "", lang, v: "2" })}`
   // Switched on for one mod, version and language; picking another one shows its original text again
   const [activeKey, setActiveKey] = useState<string | null>(null)
   const active = activeKey === key
