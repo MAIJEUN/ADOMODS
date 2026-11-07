@@ -7,6 +7,15 @@ import {
   translateDescription,
   TranslationRateLimitError,
 } from "@/lib/translate"
+import { siteUrl } from "@/lib/site"
+
+// Every Vercel deployment stays reachable at its own URL, and the public repository lists them all, so an
+// old deployment would keep translating with whatever code and key it was built with. In production only
+// the site's own domain (SITE_URL, which always points at the latest deployment) translates.
+function isServingDomain(request: NextRequest) {
+  if (process.env.VERCEL_ENV !== "production") return process.env.VERCEL_ENV === undefined
+  return !!process.env.SITE_URL && request.headers.get("host") === new URL(siteUrl).host
+}
 
 // Only the site's own pages may ask. Browsers send Sec-Fetch-Site on fetch(); where it's missing (older
 // browsers), the Referer has to be this site. This stops other sites and casual scripts, not a determined
@@ -40,6 +49,9 @@ export async function GET(request: NextRequest) {
   }
   if (!isTranslationConfigured()) {
     return NextResponse.json({ error: "Translation is not configured" }, { status: 503 })
+  }
+  if (!isServingDomain(request)) {
+    return NextResponse.json({ error: "Translation is only available on the site's own domain" }, { status: 403, headers: noStore })
   }
   if (!isFromThisSite(request)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403, headers: noStore })
