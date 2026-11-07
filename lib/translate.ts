@@ -60,15 +60,22 @@ async function requestTranslation(text: string, lang: Lang, effort: "medium" | "
     ],
   })
 
-  if (response.stop_reason === "refusal") throw new Error("Translation was declined")
-  if (response.stop_reason === "max_tokens") throw new Error("Translation was cut off")
+  if (response.stop_reason === "refusal") throw new UntranslatableError("Translation was declined")
+  if (response.stop_reason === "max_tokens") throw new UntranslatableError("Translation was cut off")
   const translated = response.content
     .map((block) => (block.type === "text" ? block.text : ""))
     .join("")
     .trim()
-  if (!translated) throw new Error("Empty translation")
+  if (!translated) throw new UntranslatableError("Empty translation")
   return dropRepeatedLines(translated)
 }
+
+// The model's answer for this description isn't usable (declined, cut off, not in the target language).
+// Asking again would cost the same and most likely fail the same way, so the failure is cached too.
+class UntranslatableError extends Error {}
+
+// Too many translations requested; nothing is cached, so it can be retried later
+export class TranslationRateLimitError extends Error {}
 
 // A reply counts as translated when clearly more of it is in the target language's script than the
 // original was. (An absolute bar doesn't work: names, file names and settings stay in their own script, so
@@ -94,16 +101,69 @@ async function translate(text: string, lang: Lang): Promise<string> {
   }
   if (secondOk) return second
   if (firstOk) return first
-  throw new Error(`Reply wasn't in ${TARGET_LANGUAGE[lang]}`)
+  throw new UntranslatableError(`Reply wasn't in ${TARGET_LANGUAGE[lang]}`)
 }
 
+// Model calls allowed per client and per server instance. Requests served from the cache don't count.
+// (Per instance, so not a hard global cap: the Anthropic spend limit is that.)
+const CLIENT_LIMIT = { calls: 10, windowMs: 10 * 60_000 }
+const INSTANCE_LIMIT = { calls: 150, windowMs: 60 * 60_000 }
+const callLog = new Map<string, number[]>()
+
+function takeCallSlot(key: string, limit: { calls: number; windowMs: number }, now: number) {
+  const recent = (callLog.get(key) ?? []).filter((t) => now - t < limit.windowMs)
+  if (recent.length >= limit.calls) {
+    callLog.set(key, recent)
+    return false
+  }
+  recent.push(now)
+  callLog.set(key, recent)
+  return true
+}
+
+function checkRateLimit(client: string) {
+  const now = Date.now()
+  if (callLog.size > 10_000) callLog.clear()
+  if (!takeCallSlot(`client:${client}`, CLIENT_LIMIT, now) || !takeCallSlot("instance", INSTANCE_LIMIT, now)) {
+    throw new TranslationRateLimitError("Too many translations requested")
+  }
+}
+
+type Outcome = { text: string } | { failed: string }
+
+// The same translation asked for again while it's still running shares the one call
+const inFlight = new Map<string, Promise<Outcome>>()
+
 // Cached by content, so each description is translated once per language (until it's edited or the
-// model changes)
-export function translateDescription(text: string, lang: Lang): Promise<string> {
+// model changes), and a description that can't be translated is only tried once. Rejects with
+// TranslationRateLimitError when `client` has asked for too many, or with an API error; neither is cached.
+export async function translateDescription(text: string, lang: Lang, client: string): Promise<Outcome> {
   const hash = createHash("sha256").update(text).digest("hex")
   // Bumped when replies change: v2 fixed untranslated replies, v3 merges descriptions written in several
-  // languages, v4 also merges ones that alternate languages line by line
-  return unstable_cache(() => translate(text, lang), ["mod-translation-v4", MODEL, lang, hash], {
-    revalidate: false,
-  })()
+  // languages, v4 also merges ones that alternate languages line by line, v5 caches failures
+  const key = ["mod-translation-v5", MODEL, lang, hash]
+  const flightKey = key.join(":")
+  const running = inFlight.get(flightKey)
+  if (running) return running
+
+  const cached = unstable_cache(
+    async (): Promise<Outcome> => {
+      // Only reached on a cache miss, i.e. when the model would actually be called
+      checkRateLimit(client)
+      try {
+        return { text: await translate(text, lang) }
+      } catch (error) {
+        if (error instanceof UntranslatableError) return { failed: error.message }
+        throw error
+      }
+    },
+    key,
+    { revalidate: false },
+  )()
+  inFlight.set(flightKey, cached)
+  try {
+    return await cached
+  } finally {
+    inFlight.delete(flightKey)
+  }
 }
