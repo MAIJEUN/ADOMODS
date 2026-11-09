@@ -15,6 +15,8 @@ const TARGET_LANGUAGE: Record<Lang, string> = {
   ko: "Korean",
   en: "English",
   zh: "Simplified Chinese",
+  ja: "Japanese",
+  fr: "French",
 }
 
 const SYSTEM_PROMPT = `You translate mod descriptions for ADOMODS, a site that lists mods for the rhythm game A Dance of Fire and Ice (ADOFAI). Each description is Discord-flavored Markdown written by whoever uploaded the mod, usually in Korean or English.

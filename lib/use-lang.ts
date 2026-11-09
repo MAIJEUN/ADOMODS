@@ -17,7 +17,7 @@ const readLang = (): Lang => {
     // Storage blocked; fall back to the browser language
   }
   const browser = navigator.language?.toLowerCase() ?? ""
-  current = browser.startsWith("ko") ? "ko" : browser.startsWith("zh") ? "zh" : "en"
+  current = LANGS.find((lang) => browser.startsWith(lang)) ?? "en"
   return current
 }
 
