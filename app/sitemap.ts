@@ -13,6 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     { url: `${siteUrl}/`, lastModified: lastModified(latest), changeFrequency: "daily", priority: 1 },
+    { url: `${siteUrl}/mods`, lastModified: lastModified(latest), changeFrequency: "daily", priority: 0.7 },
     { url: `${siteUrl}/developers`, lastModified: lastModified(latest), changeFrequency: "weekly", priority: 0.5 },
     ...mods.map((mod) => ({
       url: `${siteUrl}${getModHref(mod)}`,

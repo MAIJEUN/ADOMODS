@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Check, Copy, Database, Github, History, MessageCircle } from "lucide-react"
+import Link from "next/link"
+import { Check, Copy, Database, Github, History, List, MessageCircle } from "lucide-react"
 import { useT } from "@/lib/use-lang"
 
 const DISCORD_CONTACT = "maijeun"
@@ -80,6 +81,12 @@ export function FooterSections({ className }: { className?: string }) {
               <Database className="h-4 w-4" />
               {t("footer.data")}
             </a>
+          </li>
+          <li>
+            <Link href="/mods" className={linkClass}>
+              <List className="h-4 w-4" />
+              {t("index.title")}
+            </Link>
           </li>
           <li>
             <a href={LEGACY_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>

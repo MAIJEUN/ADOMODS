@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useMemo, useEffect, useLayoutEffect, useCallback, useRef } from "react"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -347,6 +348,13 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
       )}
 
       {visibleCount < filteredAndSortedMods.length && <LoadMoreSentinel onLoadMore={loadMore} />}
+
+      {/* A plain link to every mod, for scanning the whole list (and for search engines) */}
+      <p className="text-center text-sm">
+        <Link href="/mods" className="text-muted-foreground underline underline-offset-2 hover:text-primary">
+          {t("index.link")}
+        </Link>
+      </p>
 
       {dialog}
     </div>

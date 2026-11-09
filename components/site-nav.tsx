@@ -27,7 +27,7 @@ export function SiteNav() {
   }, [lang])
 
   const links = [
-    { href: "/", label: t("nav.mods"), active: pathname === "/" || pathname.startsWith("/mods/") },
+    { href: "/", label: t("nav.mods"), active: pathname === "/" || pathname === "/mods" || pathname.startsWith("/mods/") },
     { href: "/developers", label: t("nav.developers"), active: pathname.startsWith("/developers") },
   ]
 
