@@ -1,12 +1,12 @@
 <p align="center">
-  <a href="https://adomods.kro.kr"><img src="public/logo.png" alt="ADOMODS" width="120" /></a>
+  <a href="https://adomods.org"><img src="public/logo.png" alt="ADOMODS" width="120" /></a>
 </p>
 
 <h1 align="center">ADOMODS</h1>
 
 <p align="center">
   얼불춤(A Dance of Fire and Ice) 모드를 한눈에 찾아보고 바로 내려받는 사이트<br />
-  <b><a href="https://adomods.kro.kr">adomods.kro.kr</a></b>
+  <b><a href="https://adomods.org">adomods.org</a></b>
 </p>
 
 ---
@@ -22,7 +22,7 @@ ADOMODS는 [ADOFAI.gg](https://adofai.gg) 디스코드에 올라온 얼불춤 �
 - **개발자 페이지:** 개발자별로 올린 모드를 모아 봅니다.
 - **설명 자동 번역:** 다른 언어로 쓰인 설명을 Claude로 번역해 봅니다.
 - **5개 언어:** 한국어, English, 简体中文, 日本語, Français를 지원합니다.
-- **전체 모드 목록:** [/mods](https://adomods.kro.kr/mods)에서 모든 모드를 이름순으로 봅니다.
+- **전체 모드 목록:** [/mods](https://adomods.org/mods)에서 모든 모드를 이름순으로 봅니다.
 
 이전 버전 사이트는 [legacy.adomods.kro.kr](https://legacy.adomods.kro.kr)에 있습니다(`legacy` 브랜치).
 
@@ -42,7 +42,7 @@ pnpm build    # 프로덕션 빌드
 
 | 이름 | 용도 |
 | --- | --- |
-| `SITE_URL` | 대표 주소(예: `https://adomods.kro.kr`). canonical URL, 사이트맵, 번역 API 허용 도메인에 쓰입니다. |
+| `SITE_URL` | 대표 주소(예: `https://adomods.org`). canonical URL, 사이트맵, 번역 API 허용 도메인에 쓰입니다. |
 | `MODS_API_URL` | 모드 API 주소. 기본값은 `https://bot.adofai.gg/api/mods/`입니다(로컬 테스트용 목 서버를 가리킬 때 사용). |
 | `DISCORD_BOT_TOKEN` | 만료된 디스코드 첨부파일 링크(이미지·파일)를 다시 서명합니다. |
 | `GITHUB_TOKEN` | GitHub 릴리스 조회 한도를 늘립니다. |
