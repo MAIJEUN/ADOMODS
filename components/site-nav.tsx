@@ -5,9 +5,17 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
-import { Languages } from "lucide-react"
+import { CN, FR, JP, KR, US } from "country-flag-icons/react/3x2"
 import { LANG_NAMES, LANGS, localeOf, type Lang } from "@/lib/i18n"
 import { setLang, useT } from "@/lib/use-lang"
+
+// SVG flags rather than emoji: Windows shows flag emoji as two letters
+const FLAGS: Record<Lang, typeof KR> = { ko: KR, en: US, zh: CN, ja: JP, fr: FR }
+
+function Flag({ lang }: { lang: Lang }) {
+  const Icon = FLAGS[lang]
+  return <Icon aria-hidden className="h-3 w-[18px] shrink-0 rounded-[2px] ring-1 ring-white/10" />
+}
 
 export function SiteNav() {
   const { t, lang } = useT()
@@ -32,12 +40,13 @@ export function SiteNav() {
       ))}
       <Select value={lang} onValueChange={(value) => setLang(value as Lang)}>
         <SelectTrigger size="sm" aria-label={t("lang.label")} className="ml-2 gap-1.5">
-          <Languages className="h-4 w-4" />
+          <Flag lang={lang} />
           {LANG_NAMES[lang]}
         </SelectTrigger>
         <SelectContent align="end">
           {LANGS.map((code) => (
             <SelectItem key={code} value={code} lang={localeOf(code)}>
+              <Flag lang={code} />
               {LANG_NAMES[code]}
             </SelectItem>
           ))}
