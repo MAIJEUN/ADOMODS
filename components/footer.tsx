@@ -55,7 +55,7 @@ export function Footer() {
               <span>{t("footer.sourceCode")}</span>
             </Link>
             <a
-              href="https://adomods.kro.kr"
+              href="https://adomods.org"
               className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ExternalLink className="h-4 w-4" />

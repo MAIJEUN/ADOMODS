@@ -5,7 +5,7 @@ import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/components/language-provider"
 
-const LATEST_URL = "https://adomods.kro.kr"
+const LATEST_URL = "https://adomods.org"
 const SEEN_KEY = "adomods-legacy-notice-seen"
 
 // This is the old version of the site: tell visitors on every visit (unless they opted out) and offer
