@@ -24,7 +24,7 @@ ADOMODS는 [ADOFAI.gg](https://adofai.gg) 디스코드에 올라온 얼불춤 �
 - **5개 언어:** 한국어, English, 简体中文, 日本語, Français를 지원합니다.
 - **전체 모드 목록:** [/mods](https://adomods.org/mods)에서 모든 모드를 이름순으로 봅니다.
 
-이전 버전 사이트는 [legacy.adomods.kro.kr](https://legacy.adomods.kro.kr)에 있습니다(`legacy` 브랜치).
+이전 버전 사이트는 [legacy.adomods.org](https://legacy.adomods.org)에 있습니다(`legacy` 브랜치).
 
 ## 개발
 

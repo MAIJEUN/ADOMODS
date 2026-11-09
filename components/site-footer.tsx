@@ -8,7 +8,7 @@ import { useT } from "@/lib/use-lang"
 const DISCORD_CONTACT = "maijeun"
 const GITHUB_URL = "https://github.com/MAIJEUN/ADOMODS"
 const DATA_URL = "https://bot.adofai.gg/api/mods/"
-const LEGACY_URL = "https://legacy.adomods.kro.kr"
+const LEGACY_URL = "https://legacy.adomods.org"
 
 // Discord handles can't be linked to without the user ID, so the handle is copied instead
 function DiscordContact() {
