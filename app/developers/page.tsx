@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import DevelopersList from "@/components/developers-list"
 import { getModsSafe } from "@/lib/mods"
 
-export const revalidate = 300
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: "개발자",

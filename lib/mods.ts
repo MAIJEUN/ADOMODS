@@ -195,8 +195,9 @@ export const getAvatarUrl = (mod: Mod) => {
 export async function fetchModsFromUpstream(): Promise<Mod[]> {
   const response = await fetch(MODS_API_URL, {
     headers: { Accept: "application/json" },
-    // Cache upstream response for 5 minutes instead of hitting the bot API on every visit
-    next: { revalidate: 300 },
+    // Cache the upstream response for an hour. Pages using it can't regenerate more often than this, and
+    // each regeneration counts against Vercel's ISR write and CPU quotas; new mods show up within the hour.
+    next: { revalidate: 3600 },
     signal: AbortSignal.timeout(10_000),
   })
   if (!response.ok) {

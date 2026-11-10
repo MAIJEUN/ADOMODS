@@ -9,8 +9,9 @@ import { getMentionedUploaderNames } from "@/lib/mentions"
 
 type Props = { params: Promise<{ id: string }> }
 
-// Generated on first visit and cached, regenerated at most every 5 minutes
-export const revalidate = 300
+// Generated on first visit and cached, regenerated at most hourly: there are hundreds of these pages and
+// crawlers visit them all, so a short interval adds up fast on Vercel's ISR write and CPU quotas
+export const revalidate = 3600
 export function generateStaticParams() {
   return []
 }

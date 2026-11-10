@@ -3,7 +3,7 @@ import ModIndex from "@/components/mod-index"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { getModHref, getModsSafe, isListedMod } from "@/lib/mods"
 
-export const revalidate = 300
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: "전체 모드 목록",

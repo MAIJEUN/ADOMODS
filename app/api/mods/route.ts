@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const mods = await fetchModsFromUpstream()
     return NextResponse.json(mods, {
-      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
+      headers: { "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600" },
     })
   } catch (error) {
     console.error("Mods API fetch error:", error)

@@ -3,8 +3,8 @@ import ModsList from "@/components/mods-list"
 import { getModsSafe } from "@/lib/mods"
 import { siteUrl } from "@/lib/site"
 
-// Rendered with data on the server and regenerated at most every 5 minutes
-export const revalidate = 300
+// Rendered with data on the server and regenerated at most hourly, like the mod data it shows (lib/mods.ts)
+export const revalidate = 3600
 
 export const metadata: Metadata = { alternates: { canonical: "/" } }
 

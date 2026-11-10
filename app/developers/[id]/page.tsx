@@ -4,8 +4,8 @@ import { getModsSafe, isModOfDeveloper } from "@/lib/mods"
 
 type Props = { params: Promise<{ id: string }> }
 
-// Pages are generated on first visit and cached, regenerated at most every 5 minutes
-export const revalidate = 300
+// Pages are generated on first visit and cached, regenerated at most hourly (see app/mods/[id]/page.tsx)
+export const revalidate = 3600
 export function generateStaticParams() {
   return []
 }
