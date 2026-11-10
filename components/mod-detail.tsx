@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Check, ExternalLink, Github, Link2, Loader2, MessageSquare } from "lucide-react"
+import { Check, ChevronRight, ExternalLink, Github, Link2, Loader2, MessageSquare } from "lucide-react"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { findModByKey, formatDate, getDiscordMessageUrl, getDownloadUrl, getModHref, type Mod } from "@/lib/mods"
-import { getSourceRepoUrl } from "@/lib/source-repo"
+import { getSourceRepos, type SourceRepo } from "@/lib/source-repo"
 import { useT } from "@/lib/use-lang"
 import { DownloadButton } from "@/components/download-button"
 import { DeveloperAvatar, DeveloperLink } from "@/components/developer"
@@ -141,11 +141,64 @@ function ModDetailActions({ mod, versionState }: { mod: Mod; versionState: ModVe
   )
 }
 
+// One repository opens directly; several open a picker, since descriptions often link more than the
+// mod's own (dependencies, related mods)
+function SourceLink({ repos }: { repos: SourceRepo[] }) {
+  const { t } = useT()
+  const [open, setOpen] = useState(false)
+  const icon = <Github className="h-4 w-4" />
+  if (repos.length === 1) return <ExternalRow href={repos[0].url} icon={icon} label={t("detail.source")} />
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
+      >
+        {icon}
+        <span className="flex-1 truncate">{t("detail.source")}</span>
+        <span className="rounded bg-muted px-1.5 text-xs text-muted-foreground">{repos.length}</span>
+        <ChevronRight aria-hidden className="h-3.5 w-3.5 text-muted-foreground" />
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="flex max-h-[80vh] flex-col sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("detail.sourcePick")}</DialogTitle>
+            <DialogDescription>{t("detail.sourcePickHint")}</DialogDescription>
+          </DialogHeader>
+          <ul className="-mx-2 flex-1 space-y-1 overflow-y-auto">
+            {repos.map((repo) => (
+              <li key={repo.url}>
+                <a
+                  href={repo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-muted"
+                >
+                  <Github aria-hidden className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{repo.name}</span>
+                    <span className="block truncate text-xs text-muted-foreground">{repo.host}</span>
+                  </span>
+                  {repo.fromDownload && <Badge variant="secondary">{t("detail.sourceFromDownload")}</Badge>}
+                  <ExternalLink aria-hidden className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
 // Sidebar, below: info, links, favorite and share
 function ModDetailMeta({ latestMod, mod }: { latestMod: Mod; mod: Mod }) {
   const { t, locale } = useT()
   const discordUrl = getDiscordMessageUrl(mod)
-  const sourceUrl = getSourceRepoUrl(mod)
+  const sourceRepos = getSourceRepos(mod)
 
   return (
     <div className="space-y-6">
@@ -178,10 +231,10 @@ function ModDetailMeta({ latestMod, mod }: { latestMod: Mod; mod: Mod }) {
         </dl>
       </SidebarSection>
 
-      {(sourceUrl || discordUrl) && (
+      {(sourceRepos.length > 0 || discordUrl) && (
         <SidebarSection title={t("detail.links")}>
           <div className="-mx-2">
-            {sourceUrl && <ExternalRow href={sourceUrl} icon={<Github className="h-4 w-4" />} label={t("detail.source")} />}
+            {sourceRepos.length > 0 && <SourceLink repos={sourceRepos} />}
             {discordUrl && (
               <ExternalRow href={discordUrl} icon={<MessageSquare className="h-4 w-4" />} label={t("detail.discord")} />
             )}

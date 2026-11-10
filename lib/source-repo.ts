@@ -31,13 +31,35 @@ function toRepoUrl(raw: string): string | null {
 
 const REPO_LINK = /https?:\/\/(?:www\.)?(?:github\.com|gitlab\.com|codeberg\.org)\/[^\s()<>[\]"'`|*]+/gi
 
-// The mod's source repository: from the download links, else the first repo linked in the description
-export function getSourceRepoUrl(mod: Mod): string | null {
+export interface SourceRepo {
+  url: string
+  // owner/repo, for showing in a list
+  name: string
+  host: string
+  // Where the mod's download link points, so most likely the mod's own repository
+  fromDownload: boolean
+}
+
+// Every source repository a mod links to, most likely first: the download links' repository, then the ones
+// the description links to, in order. Descriptions often link several (dependencies, related mods), so the
+// first one isn't always the mod's own.
+export function getSourceRepos(mod: Mod): SourceRepo[] {
   // parsedDownload first: it follows renamed repositories (OrbitRender was ADOFAIRenderer)
-  const candidates = [mod.parsedDownload ?? "", mod.download ?? "", ...(mod.description?.match(REPO_LINK) ?? [])]
-  for (const candidate of candidates) {
-    const repo = toRepoUrl(candidate)
-    if (repo && !LOADER_REPOS.has(repo.replace("https://", "").toLowerCase())) return repo
+  const candidates = [
+    ...[mod.parsedDownload, mod.download].map((link) => ({ link: link ?? "", fromDownload: true })),
+    ...(mod.description?.match(REPO_LINK) ?? []).map((link) => ({ link, fromDownload: false })),
+  ]
+  const repos: SourceRepo[] = []
+  const seen = new Set<string>()
+  for (const { link, fromDownload } of candidates) {
+    const url = toRepoUrl(link)
+    if (!url) continue
+    // GitHub and GitLab paths aren't case-sensitive
+    const key = url.replace("https://", "").toLowerCase()
+    if (LOADER_REPOS.has(key) || seen.has(key)) continue
+    seen.add(key)
+    const { host, pathname } = new URL(url)
+    repos.push({ url, name: pathname.slice(1), host, fromDownload })
   }
-  return null
+  return repos
 }
