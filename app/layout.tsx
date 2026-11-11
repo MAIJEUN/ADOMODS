@@ -49,10 +49,11 @@ export const metadata: Metadata = {
   // ?v= busts browsers' favicon cache when the icons change
   icons: {
     icon: [
-      { url: "/favicon.ico?v=4", sizes: "48x48" },
-      { url: "/icon.png?v=4", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico?v=5", sizes: "48x48" },
+      // Google shows site icons only in multiples of 48px
+      { url: "/icon.png?v=5", type: "image/png", sizes: "192x192" },
     ],
-    apple: "/apple-icon.png?v=4",
+    apple: "/apple-icon.png?v=5",
   },
 }
 
