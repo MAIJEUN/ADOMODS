@@ -143,9 +143,35 @@ export const getDiscordMessageUrl = (mod: Mod) => {
 // Discord user ID is stable across username changes; fall back to the name for older entries
 export const getDeveloperId = (mod: Mod) => mod.user || mod.cachedUsername || null
 
+// Developer pages are addressed by Discord handle (/developers/tjwogud), which reads better and shows up in
+// search results. Handles can change, so the page also answers to the user ID and to old handles still on
+// older mods, and redirects those to the current handle (app/developers/[id]/page.tsx).
+export const developerPath = (key: string) => `/developers/${encodeURIComponent(key)}`
+
 export const getDeveloperHref = (mod: Mod) => {
-  const id = getDeveloperId(mod)
-  return id ? `/developers/${encodeURIComponent(id)}` : null
+  const key = mod.cachedUsername || getDeveloperId(mod)
+  return key ? developerPath(key) : null
+}
+
+// The developer a /developers/[key] URL points to (by user ID, current or old handle), and the address
+// their page should be at: the current handle, or the ID when there's no handle or another developer
+// has the same one
+export function resolveDeveloper(mods: Mod[], key: string): { id: string; path: string } | null {
+  let id: string | null = mods.some((mod) => mod.user === key) ? key : null
+  if (!id) {
+    const lower = key.toLowerCase()
+    const owners = new Set(mods.filter((mod) => mod.cachedUsername?.toLowerCase() === lower).map(getDeveloperId))
+    if (owners.size === 1) id = [...owners][0]
+  }
+  if (!id) return null
+  const developerId = id
+
+  const own = mods
+    .filter((mod) => isModOfDeveloper(mod, developerId))
+    .sort((a, b) => (b.uploadedTimestamp || 0) - (a.uploadedTimestamp || 0))
+  const handle = own.find((mod) => mod.cachedUsername)?.cachedUsername
+  const handleTaken = !!handle && getDevelopers(mods).some((dev) => dev.id !== developerId && dev.name === handle)
+  return { id: developerId, path: developerPath(handle && !handleTaken ? handle : developerId) }
 }
 
 export const isModOfDeveloper = (mod: Mod, developerId: string) =>
@@ -158,6 +184,8 @@ export interface Developer {
   avatarMod: Mod
   modCount: number
   latestUpload?: number
+  // Their page: by current handle, or by ID when there's none or it's not unique
+  href: string
 }
 
 // Groups mods by developer; name/avatar come from the developer's newest mod
@@ -170,7 +198,7 @@ export function getDevelopers(mods: Mod[]): Developer[] {
     if (list) list.push(mod)
     else byId.set(id, [mod])
   }
-  return [...byId].map(([id, devMods]) => {
+  const developers = [...byId].map(([id, devMods]) => {
     const sorted = devMods.sort((a, b) => (b.uploadedTimestamp || 0) - (a.uploadedTimestamp || 0))
     return {
       id,
@@ -178,8 +206,13 @@ export function getDevelopers(mods: Mod[]): Developer[] {
       avatarMod: sorted.find((mod) => mod.cachedAvatar) ?? sorted[0],
       modCount: sorted.length,
       latestUpload: sorted[0].uploadedTimestamp,
+      href: "",
     }
   })
+  const nameCount = new Map<string, number>()
+  for (const dev of developers) nameCount.set(dev.name, (nameCount.get(dev.name) ?? 0) + 1)
+  for (const dev of developers) dev.href = developerPath(nameCount.get(dev.name) === 1 ? dev.name : dev.id)
+  return developers
 }
 
 export const getAvatarUrl = (mod: Mod) => {

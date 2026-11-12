@@ -13,6 +13,7 @@ import {
 import { useT } from "@/lib/use-lang"
 import { useImageFallback } from "@/components/use-image-fallback"
 import { getUploaderName } from "@/lib/mentions"
+import { developerPath } from "@/lib/mods"
 import { getLinkPreview, openableHref, type LinkPreview } from "@/lib/link-preview"
 
 export function ImageWithFallback({
@@ -94,7 +95,7 @@ function UserMention({ id, className }: { id: string; className?: string }) {
   const name = getUploaderName(id)
   if (!name) return <span className={className}>@{id}</span>
   return (
-    <a href={`/developers/${encodeURIComponent(id)}`} className={`${className ?? ""} hover:underline`}>
+    <a href={developerPath(name)} className={`${className ?? ""} hover:underline`}>
       @{name}
     </a>
   )

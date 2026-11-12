@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next"
-import { getDeveloperHref, getDevelopers, getModHref, getModsSafe, isListedMod } from "@/lib/mods"
+import { getDevelopers, getModHref, getModsSafe, isListedMod } from "@/lib/mods"
 import { siteUrl } from "@/lib/site"
 
 export const revalidate = 3600
@@ -22,7 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     })),
     ...getDevelopers(mods).map((developer) => ({
-      url: `${siteUrl}${getDeveloperHref(developer.avatarMod)}`,
+      url: `${siteUrl}${developer.href}`,
       lastModified: lastModified(developer.latestUpload),
       changeFrequency: "weekly" as const,
       priority: 0.4,

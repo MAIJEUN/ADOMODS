@@ -87,7 +87,7 @@ export default function DevelopersList({ initialMods }: { initialMods?: Mod[] })
           {shown.map((dev) => (
             <Link
               key={dev.id}
-              href={`/developers/${encodeURIComponent(dev.id)}`}
+              href={dev.href}
               className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/50"
             >
               <DeveloperAvatar mod={dev.avatarMod} size="lg" />
