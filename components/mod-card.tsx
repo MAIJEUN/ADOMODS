@@ -137,7 +137,7 @@ export const ModCard = memo(function ModCard({
           <CardTitle className="text-lg line-clamp-1">
             <a
               href={getModHref(mod)}
-              className="hover:text-primary"
+              className="hover:underline underline-offset-4"
               onClick={(e) => {
                 if (!isPlainClick(e)) return
                 e.preventDefault()

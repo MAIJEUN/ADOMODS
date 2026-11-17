@@ -351,7 +351,7 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
 
       {/* A plain link to every mod, for scanning the whole list (and for search engines) */}
       <p className="text-center text-sm">
-        <Link href="/mods" className="text-muted-foreground underline underline-offset-2 hover:text-primary">
+        <Link href="/mods" className="text-muted-foreground underline underline-offset-2 hover:text-foreground">
           {t("index.link")}
         </Link>
       </p>

@@ -59,7 +59,7 @@ export function DeveloperLink({ mod, className }: { mod: Mod; className?: string
   const href = getDeveloperHref(mod)
   if (!href) return <span className={className}>{mod.cachedUsername}</span>
   return (
-    <Link href={href} className={`hover:text-primary hover:underline ${className ?? ""}`}>
+    <Link href={href} className={`hover:underline ${className ?? ""}`}>
       {mod.cachedUsername || t("common.unknownDeveloper")}
     </Link>
   )

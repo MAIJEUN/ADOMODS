@@ -25,7 +25,7 @@ function DiscordContact() {
     <button
       type="button"
       title={t("footer.copyHandle")}
-      className="inline-flex items-center gap-1.5 text-foreground hover:text-primary"
+      className="inline-flex items-center gap-1.5 text-foreground hover:underline"
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(DISCORD_CONTACT)
@@ -42,7 +42,7 @@ function DiscordContact() {
   )
 }
 
-const linkClass = "inline-flex items-center gap-1.5 text-foreground hover:text-primary hover:underline"
+const linkClass = "inline-flex items-center gap-1.5 text-foreground hover:underline"
 
 // About / contact / links columns; used by the page footer and the bottom info panel
 export function FooterSections({ className }: { className?: string }) {

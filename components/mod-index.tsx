@@ -29,7 +29,7 @@ export default function ModIndex({ entries }: { entries: ModIndexEntry[] }) {
       <ul className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
         {entries.map((entry) => (
           <li key={entry.href} className="border-b border-border py-2.5">
-            <Link href={entry.href} className="font-medium break-words hover:text-primary hover:underline">
+            <Link href={entry.href} className="font-medium break-words hover:underline">
               <DiscordText text={entry.name} />
             </Link>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">
