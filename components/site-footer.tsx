@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Check, Copy, Database, Github, History, List, MessageCircle } from "lucide-react"
 import { useT } from "@/lib/use-lang"
+import { Wordmark } from "@/components/wordmark"
 
 const DISCORD_CONTACT = "maijeun"
 const GITHUB_URL = "https://github.com/MAIJEUN/ADOMODS"
@@ -52,7 +53,7 @@ export function FooterSections({ className }: { className?: string }) {
     <div className={`grid gap-8 text-sm sm:grid-cols-3 ${className ?? ""}`}>
       <div className="space-y-2">
         <p className="font-semibold">
-          <span className="text-primary">ADO</span>MODS
+          <Wordmark />
         </p>
         <p className="text-muted-foreground">{t("footer.about")}</p>
       </div>

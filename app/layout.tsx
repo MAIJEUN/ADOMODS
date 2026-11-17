@@ -10,6 +10,7 @@ import { ScrollToTop } from "@/components/scroll-to-top"
 import { SiteFooter } from "@/components/site-footer"
 import { InfoTab } from "@/components/info-tab"
 import { NavigationTracker } from "@/components/back-button"
+import { Wordmark } from "@/components/wordmark"
 import { siteUrl } from "@/lib/site"
 import "./globals.css"
 
@@ -80,7 +81,7 @@ export default function RootLayout({
                 <div>
                   {/* Not a heading: each page has its own h1 */}
                   <p className="text-2xl font-bold text-balance sm:text-3xl">
-                    <span className="text-primary">ADO</span>MODS
+                    <Wordmark />
                   </p>
                   <p className="hidden text-sm text-muted-foreground mt-1 sm:block">A Dance of Fire and Ice Mods</p>
                 </div>
