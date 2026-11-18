@@ -91,9 +91,9 @@ function Spoiler({ children }: { children?: ReactNode }) {
 }
 
 // <@id>: the uploader's name and profile when they uploaded a mod, otherwise the ID
-function UserMention({ id, className }: { id: string; className?: string }) {
+function UserMention({ id, className, link = true }: { id: string; className?: string; link?: boolean }) {
   const name = getUploaderName(id)
-  if (!name) return <span className={className}>@{id}</span>
+  if (!name || !link) return <span className={className}>@{name ?? id}</span>
   return (
     <a href={developerPath(name)} className={`${className ?? ""} hover:underline`}>
       @{name}
@@ -102,17 +102,21 @@ function UserMention({ id, className }: { id: string; className?: string }) {
 }
 
 // Discord-only elements produced by lib/discord-markdown
-const discordComponents: Components = {
-  span: ({ node, className, children, ...props }) => {
+const discordSpan =
+  (linkMentions: boolean): Components["span"] =>
+  ({ node, className, children, ...props }) => {
     if (className?.includes("discord-spoiler")) return <Spoiler>{children}</Spoiler>
     const userId = (props as Record<string, unknown>)["data-user-id"]
-    if (typeof userId === "string") return <UserMention id={userId} className={className} />
+    if (typeof userId === "string") return <UserMention id={userId} className={className} link={linkMentions} />
     return (
       <span className={className} {...props}>
         {children}
       </span>
     )
-  },
+  }
+
+const discordComponents: Components = {
+  span: discordSpan(true),
   blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-border pl-3 my-1" {...props} />,
   hr: () => <hr className="my-3 border-border" />,
 }
@@ -225,9 +229,12 @@ function LinkPreviewBlock({ preview, fallback }: { preview: LinkPreview; fallbac
   )
 }
 
-// Compact rendering for the card preview (inside a 2-line clamp); blocks become inline spans
+// Compact rendering for the card preview (inside a 2-line clamp); blocks become inline spans.
+// Links and mentions are plain text here: clicking anywhere in the description opens the mod.
 const previewMarkdownComponents: Components = {
   ...discordComponents,
+  span: discordSpan(false),
+  a: ({ children }) => <span>{children}</span>,
   p: ({ node, ...props }) => (
     <>
       <span {...props} />{" "}
