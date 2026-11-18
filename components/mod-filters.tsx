@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { ChevronDown, Search, Sparkles, Star, Users, X } from "lucide-react"
+import { ChevronDown, Search, Star, Users, X } from "lucide-react"
 import { matchesQuery, toChosungKey } from "@/lib/hangul"
 import type { Developer } from "@/lib/mods"
 import { useT } from "@/lib/use-lang"
@@ -20,12 +20,10 @@ export interface FilterState {
   // Developer IDs (see getDeveloperId)
   developers?: string[]
   favoritesOnly?: boolean
-  // Uploaded within NEW_MOD_DAYS
-  newOnly?: boolean
 }
 
 export const countActiveFilters = (filters: FilterState) =>
-  (filters.developers?.length ?? 0) + [filters.favoritesOnly, filters.newOnly].filter(Boolean).length
+  (filters.developers?.length ?? 0) + (filters.favoritesOnly ? 1 : 0)
 
 // On/off filter shown as a button; aria-pressed tells assistive tech whether it's on
 function ToggleChip({
@@ -176,8 +174,8 @@ export function ModFilters({
   const selectedDevelopers = filters.developers ?? []
   const activeCount = countActiveFilters(filters)
 
-  const toggle = (key: "favoritesOnly" | "newOnly") =>
-    onFiltersChange((prev) => ({ ...prev, [key]: prev[key] ? undefined : true }))
+  const toggleFavorites = () =>
+    onFiltersChange((prev) => ({ ...prev, favoritesOnly: prev.favoritesOnly ? undefined : true }))
 
   const setDevelopers = (ids: string[]) =>
     onFiltersChange((prev) => ({ ...prev, developers: ids.length > 0 ? ids : undefined }))
@@ -245,14 +243,11 @@ export function ModFilters({
       <div role="group" aria-label={t("list.quickFilters")} className="flex flex-wrap items-center gap-2">
         <ToggleChip
           pressed={!!filters.favoritesOnly}
-          onToggle={() => toggle("favoritesOnly")}
+          onToggle={toggleFavorites}
           icon={<Star className={filters.favoritesOnly ? "fill-current" : ""} />}
         >
           {t("list.favorites")}
           {favoritesCount > 0 && <span className="text-xs opacity-70">{favoritesCount}</span>}
-        </ToggleChip>
-        <ToggleChip pressed={!!filters.newOnly} onToggle={() => toggle("newOnly")} icon={<Sparkles />}>
-          {t("list.newOnly")}
         </ToggleChip>
         <DeveloperPicker
           developers={developers}

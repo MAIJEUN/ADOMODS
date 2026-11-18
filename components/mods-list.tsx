@@ -16,7 +16,6 @@ import {
   getModId,
   isListedMod,
   isUploadedWithin,
-  NEW_MOD_DAYS,
   RECENT_MOD_DAYS,
   type Mod,
 } from "@/lib/mods"
@@ -50,7 +49,7 @@ const savedState = {
   scrollY: 0,
 }
 
-// ?q=...&sort=...&dev=<id>&dev=<id>&fav=1&new=1 — shareable and survives reloads
+// ?q=...&sort=...&dev=<id>&dev=<id>&fav=1 — shareable and survives reloads
 const parseQuery = (search: string) => {
   const params = new URLSearchParams(search)
   const sort = params.get("sort")
@@ -61,7 +60,6 @@ const parseQuery = (search: string) => {
     filters: {
       developers: developers.length > 0 ? developers : undefined,
       favoritesOnly: params.get("fav") === "1" || undefined,
-      newOnly: params.get("new") === "1" || undefined,
     } satisfies FilterState,
   }
 }
@@ -72,7 +70,6 @@ const buildQuery = (searchQuery: string, sortBy: SortType, filters: FilterState)
   if (sortBy !== "newest") params.set("sort", sortBy)
   for (const id of filters.developers ?? []) params.append("dev", id)
   if (filters.favoritesOnly) params.set("fav", "1")
-  if (filters.newOnly) params.set("new", "1")
   const query = params.toString()
   return query ? `?${query}` : ""
 }
@@ -212,7 +209,6 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
         if (!isListedMod(mod)) return false
         if (filters.developers?.length && !filters.developers.includes(getDeveloperId(mod) ?? "")) return false
         if (filters.favoritesOnly && !favorites.has(getModId(mod))) return false
-        if (filters.newOnly && !isUploadedWithin(mod, NEW_MOD_DAYS)) return false
         if (!query) return true
         const entry = searchIndex.get(mod)
         return !!entry && matchesQuery(entry.text, entry.chosung, query)
