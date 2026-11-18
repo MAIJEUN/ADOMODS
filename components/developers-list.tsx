@@ -83,12 +83,12 @@ export default function DevelopersList({ initialMods }: { initialMods?: Mod[] })
       )}
 
       {!isLoading && !error && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((dev) => (
             <Link
               key={dev.id}
               href={dev.href}
-              className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/50"
+              className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-accent/40"
             >
               <DeveloperAvatar mod={dev.avatarMod} size="lg" />
               <div className="min-w-0 space-y-1">

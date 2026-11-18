@@ -100,7 +100,7 @@ export default function DeveloperProfile({ developerId, initialMods }: { develop
               <h3 className="text-xl font-semibold">{t("dev.mods")}</h3>
               <Badge variant="secondary">{developerMods.length}</Badge>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
               {developerMods.map((mod, index) => (
                 <ModCard key={getModId(mod) || index} mod={mod} onOpen={openMod} showDeveloper={false} />
               ))}

@@ -44,6 +44,7 @@ export function DownloadButton({
   external,
   size,
   label: text,
+  iconOnly,
 }: {
   url?: string
   // For a past version: release links resolve to that version's release instead of the latest
@@ -53,6 +54,8 @@ export function DownloadButton({
   size?: "default" | "lg"
   // Replaces the default "Download" text
   label?: string
+  // A small outlined icon button; the text becomes its accessible name and tooltip
+  iconOnly?: boolean
 }) {
   const [loading, setLoading] = useState(false)
   const [picker, setPicker] = useState<ResolvedDownload | null>(null)
@@ -60,7 +63,14 @@ export function DownloadButton({
   const plan = getDownloadPlan(url)
   if (!plan) return null
 
-  const label = (
+  const name = text ?? t("download.button")
+  const icon = loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />
+  const buttonProps = iconOnly
+    ? ({ variant: "outline", size: "icon-sm", "aria-label": name, title: name } as const)
+    : { size }
+  const label = iconOnly ? (
+    icon
+  ) : (
     <>
       {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
       {text ?? t("download.button")}
@@ -70,7 +80,7 @@ export function DownloadButton({
 
   if (plan.kind !== "resolve") {
     return (
-      <Button size={size} className={className} asChild>
+      <Button {...buttonProps} className={className} asChild>
         <a href={plan.url} target="_blank" rel="noopener noreferrer">
           {label}
         </a>
@@ -99,7 +109,7 @@ export function DownloadButton({
   return (
     <>
       <Button
-        size={size}
+        {...buttonProps}
         className={className}
         disabled={loading}
         onClick={handleClick}

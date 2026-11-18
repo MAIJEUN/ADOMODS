@@ -52,7 +52,7 @@ export default function ModPage({
 function ModPageContent({ mod }: { mod: Mod }) {
   return (
     <article className="space-y-6">
-      <h1 className="border-b border-border pb-5 text-3xl font-bold md:text-4xl">
+      <h1 className="border-b border-border pb-5 text-3xl font-bold tracking-tight">
         <DiscordText text={mod.name} />
       </h1>
       <ModDetailView mod={mod} variant="page" />

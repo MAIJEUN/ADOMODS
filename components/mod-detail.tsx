@@ -26,8 +26,8 @@ function ModDetailMain({ mod, versionState }: { mod: Mod; versionState: ModVersi
     <div className={`max-w-none [&>*]:break-words ${versionState.loading ? "opacity-60" : ""}`}>
       {mod.description && (
         <>
-          <div className="mb-2 flex items-center gap-2">
-            <h2 className="flex items-center gap-2 text-lg font-bold">
+          <div className="mb-3 flex items-center gap-2">
+            <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               {t("detail.description")}
               {/* Makes clear the text below belongs to the older version picked in the sidebar */}
               {!versionState.isLatest && <Badge variant="outline">v{mod.version}</Badge>}
@@ -87,7 +87,7 @@ function CopyLinkButton({ mod, className }: { mod: Mod; className?: string }) {
 function SidebarSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
+      <h2 className="text-xs font-medium text-muted-foreground">{title}</h2>
       {children}
     </section>
   )
@@ -265,8 +265,8 @@ export function ModDetailView({ mod, variant }: { mod: Mod; variant: "dialog" | 
   if (variant === "page") {
     const panel = "rounded-xl border border-border bg-card p-5 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0"
     return (
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-8">
-        <aside className="contents lg:sticky lg:top-32 lg:order-2 lg:block lg:space-y-6 lg:self-start lg:rounded-xl lg:border lg:border-border lg:bg-card lg:p-5">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-12">
+        <aside className="contents lg:sticky lg:top-24 lg:order-2 lg:block lg:space-y-6 lg:self-start">
           <div className={`order-1 ${panel}`}>{actions}</div>
           <div className={`order-3 ${panel}`}>{meta}</div>
         </aside>

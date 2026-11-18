@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist_Mono } from "next/font/google"
 import Image from "next/image"
 import Link from "next/link"
 import { Analytics } from "@vercel/analytics/next"
@@ -14,7 +14,6 @@ import { Wordmark } from "@/components/wordmark"
 import { siteUrl } from "@/lib/site"
 import "./globals.css"
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
 
 const description =
@@ -64,33 +63,32 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ko" className={`${geist.variable} ${geistMono.variable}`}>
+    <html lang="ko" className={geistMono.variable}>
+      <head>
+        {/* Pretendard: Korean and Latin in one face. The dynamic subset loads only the glyphs a page uses */}
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
+      </head>
       <body className={`font-sans antialiased`}>
         <NavigationTracker />
         <div className="min-h-screen bg-background">
-          <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-            <div className="container mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:py-6">
-              <Link href="/" className="flex w-fit items-center gap-3 sm:gap-4">
-                <Image
-                  src="/logo.png"
-                  alt="ADOMODS Logo"
-                  width={60}
-                  height={60}
-                  className="h-10 w-10 object-contain sm:h-[60px] sm:w-[60px]"
-                />
-                <div>
-                  {/* Not a heading: each page has its own h1 */}
-                  <p className="text-2xl font-bold text-balance sm:text-3xl">
-                    <Wordmark />
-                  </p>
-                  <p className="hidden text-sm text-muted-foreground mt-1 sm:block">A Dance of Fire and Ice Mods</p>
-                </div>
+          <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
+            <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 flex h-14 items-center justify-between gap-4 sm:h-15">
+              <Link href="/" className="flex items-center gap-2.5">
+                <Image src="/logo.png" alt="" width={28} height={28} className="h-7 w-7 object-contain" />
+                {/* Not a heading: each page has its own h1 */}
+                <span className="text-lg font-bold tracking-tight">
+                  <Wordmark />
+                </span>
               </Link>
               <SiteNav />
             </div>
           </header>
 
-          <main className="container mx-auto px-4 py-8">{children}</main>
+          <main className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-8">{children}</main>
 
           <SiteFooter />
         </div>

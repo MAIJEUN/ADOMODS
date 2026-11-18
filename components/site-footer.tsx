@@ -108,11 +108,11 @@ export function SiteFooter() {
 
   return (
     <footer id={SITE_FOOTER_ID} className="border-t border-border mt-16">
-      <FooterSections className="container mx-auto px-4 py-10" />
+      <FooterSections className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-10" />
 
       <div className="border-t border-border">
         {/* Extra bottom space on phones so the back-to-top button doesn't cover the text */}
-        <p className="container mx-auto px-4 pt-4 pb-20 text-center text-xs text-muted-foreground sm:pb-4">
+        <p className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-4 pb-20 text-center text-xs text-muted-foreground sm:pb-4">
           {t("footer.disclaimer")}
         </p>
       </div>

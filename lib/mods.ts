@@ -97,6 +97,13 @@ export const formatDate = (timestamp?: number, locale = "ko-KR") => {
   })
 }
 
+// Short date for cards: "11. 17." this year, "2025. 3. 4." for older uploads
+export const formatShortDate = (timestamp: number, locale = "ko-KR") => {
+  const date = new Date(timestamp)
+  const thisYear = date.getFullYear() === new Date().getFullYear()
+  return date.toLocaleDateString(locale, { year: thisYear ? undefined : "numeric", month: "numeric", day: "numeric" })
+}
+
 // Mods shown in lists (mod list, recent row, developer pages and counts): only entries with a
 // version and a usable download link. Others are incomplete bot entries.
 export const isListedMod = (mod: Mod) => !!mod.version && !!getDownloadUrl(mod) && !mod.hideFromSearch

@@ -2,16 +2,16 @@
 
 import { memo, useMemo, type MouseEvent } from "react"
 import useSWR from "swr"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Hash, Info, Star } from "lucide-react"
+import { Star } from "lucide-react"
 import { proxyImage } from "@/lib/image-proxy"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { useFavorites } from "@/lib/favorites"
 import { rememberUploaderNames } from "@/lib/mentions"
 import {
   formatDate,
+  formatShortDate,
   getDownloadUrl,
   getModHref,
   getModId,
@@ -111,14 +111,17 @@ export const ModCard = memo(function ModCard({
     onOpen(mod)
   }
 
+  const version = mod.version && (/^\d/.test(mod.version) ? `v${mod.version}` : mod.version)
+
   // content-visibility lets the browser skip style/layout for off-screen cards (opening a dialog restyles the page)
   return (
-    <Card
+    <div
+      data-slot="card"
       onClick={handleCardClick}
-      className="group cursor-pointer hover:border-primary/50 transition-all duration-200 overflow-hidden flex flex-col [content-visibility:auto] [contain-intrinsic-size:auto_420px]"
+      className="group flex cursor-pointer flex-col gap-2 overflow-hidden rounded-xl border border-border bg-card p-4 transition-colors hover:bg-accent/40 sm:p-5 [content-visibility:auto] [contain-intrinsic-size:auto_170px]"
     >
       {mod.thumbnail && !thumbnail.failed && (
-        <div className="aspect-video w-full bg-muted relative overflow-hidden">
+        <div className="relative mb-2 aspect-video w-full overflow-hidden rounded-lg bg-muted">
           <img
             src={proxyImage(mod.thumbnail)}
             alt={stripDiscordEmoji(mod.name)}
@@ -127,70 +130,74 @@ export const ModCard = memo(function ModCard({
             decoding="async"
             ref={thumbnail.ref}
             onError={thumbnail.onError}
-            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
+            className="h-full w-full object-cover"
           />
         </div>
       )}
 
-      <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg line-clamp-1">
-            <a
-              href={getModHref(mod)}
-              className="hover:underline underline-offset-4"
-              onClick={(e) => {
-                if (!isPlainClick(e)) return
-                e.preventDefault()
-                onOpen(mod)
-              }}
-            >
-              <DiscordText text={mod.name} />
-            </a>
-          </CardTitle>
-          <div className="-mt-1.5 -mr-2 flex shrink-0 items-center gap-1">
-            {isNew && <Badge>{t("card.new")}</Badge>}
-            {mod.category && <Badge variant="outline">{mod.category}</Badge>}
-            <FavoriteButton mod={mod} className="h-8 w-8" />
-          </div>
-        </div>
-        {mod.description && (
-          <CardDescription className="line-clamp-2">
-            <DescriptionPreview description={mod.description} />
-          </CardDescription>
+      <div className="flex min-w-0 items-center gap-2">
+        <h3 className="min-w-0 truncate text-base font-semibold">
+          <a
+            href={getModHref(mod)}
+            className="hover:underline underline-offset-4"
+            onClick={(e) => {
+              if (!isPlainClick(e)) return
+              e.preventDefault()
+              onOpen(mod)
+            }}
+          >
+            <DiscordText text={mod.name} />
+          </a>
+        </h3>
+        {isNew && (
+          <Badge variant="outline" className="shrink-0 rounded-full px-2 text-[11px]">
+            {t("card.new")}
+          </Badge>
         )}
-      </CardHeader>
+        {mod.category && (
+          <Badge variant="outline" className="shrink-0">
+            {mod.category}
+          </Badge>
+        )}
+        <FavoriteButton mod={mod} className="-my-1 -mr-2 ml-auto h-8 w-8 shrink-0" />
+      </div>
 
-      <CardContent className="space-y-4 flex-1 flex flex-col">
-        <div className="flex-1 space-y-2 text-sm">
-          {showDeveloper && mod.cachedUsername && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <DeveloperAvatar mod={mod} />
-              <DeveloperLink mod={mod} className="text-foreground font-medium truncate" />
-            </div>
-          )}
-          {mod.version && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Hash className="h-4 w-4" />
-              <span>{t("card.version", { v: mod.version })}</span>
-            </div>
-          )}
-          {mod.uploadedTimestamp && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>{formatDate(mod.uploadedTimestamp, locale)}</span>
-            </div>
-          )}
+      {/* The clamp sits in its own box: stretched by flex-1, it would let a third line show */}
+      <div className="min-h-10 flex-1">
+        <div data-slot="card-description" className="line-clamp-2 text-sm text-muted-foreground">
+          {mod.description && <DescriptionPreview description={mod.description} />}
         </div>
+      </div>
 
-        <div className="flex gap-2">
-          <DownloadButton url={getDownloadUrl(mod) ?? undefined} className="flex-1" />
-
-          <Button variant="outline" className="flex-1 bg-transparent" onClick={() => onOpen(mod)}>
-            <Info className="mr-2 h-4 w-4" />
-            {t("card.details")}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[13px] text-muted-foreground">
+        {showDeveloper && mod.cachedUsername && (
+          <>
+            <DeveloperAvatar mod={mod} />
+            <DeveloperLink mod={mod} className="min-w-0 truncate text-foreground" />
+          </>
+        )}
+        {version && (
+          <>
+            {showDeveloper && mod.cachedUsername && <span aria-hidden className="opacity-50">·</span>}
+            <span className="shrink-0" title={t("card.version", { v: mod.version ?? "" })}>
+              {version}
+            </span>
+          </>
+        )}
+        {mod.uploadedTimestamp && (
+          <>
+            {(version || (showDeveloper && mod.cachedUsername)) && <span aria-hidden className="opacity-50">·</span>}
+            <time
+              className="shrink-0"
+              dateTime={new Date(mod.uploadedTimestamp).toISOString()}
+              title={formatDate(mod.uploadedTimestamp, locale)}
+            >
+              {formatShortDate(mod.uploadedTimestamp, locale)}
+            </time>
+          </>
+        )}
+        <DownloadButton url={getDownloadUrl(mod) ?? undefined} iconOnly className="ml-auto shrink-0" />
+      </div>
+    </div>
   )
 })

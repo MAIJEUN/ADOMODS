@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { ChevronDown, Search, Star, Users, X } from "lucide-react"
+import { ChevronDown, Search, Star, X } from "lucide-react"
 import { matchesQuery, toChosungKey } from "@/lib/hangul"
 import type { Developer } from "@/lib/mods"
 import { useT } from "@/lib/use-lang"
@@ -41,13 +41,12 @@ function ToggleChip({
     <Button
       type="button"
       variant="outline"
-      size="sm"
       aria-pressed={pressed}
       onClick={onToggle}
       className={
         pressed
-          ? "border-primary bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary"
-          : "bg-transparent text-muted-foreground hover:text-foreground"
+          ? "border-foreground/40 bg-accent text-foreground hover:bg-accent"
+          : "bg-transparent dark:bg-transparent [&_svg]:text-muted-foreground"
       }
     >
       {icon}
@@ -88,14 +87,12 @@ function DeveloperPicker({
         <Button
           type="button"
           variant="outline"
-          size="sm"
           className={
             pressed
-              ? "border-primary bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary"
-              : "bg-transparent text-muted-foreground hover:text-foreground"
+              ? "border-foreground/40 bg-accent text-foreground hover:bg-accent"
+              : "bg-transparent dark:bg-transparent [&_svg]:text-muted-foreground"
           }
         >
-          <Users />
           {pressed ? t("list.developersSelected", { n: selected.length }) : t("list.developer")}
           <ChevronDown className="opacity-60" />
         </Button>
@@ -154,7 +151,6 @@ export function ModFilters({
   filters,
   onFiltersChange,
   developers,
-  resultCount,
   favoritesCount,
 }: {
   searchQuery: string
@@ -165,7 +161,6 @@ export function ModFilters({
   filters: FilterState
   onFiltersChange: (update: (prev: FilterState) => FilterState) => void
   developers: Developer[]
-  resultCount: number
   favoritesCount: number
 }) {
   const { t } = useT()
@@ -185,9 +180,9 @@ export function ModFilters({
 
   return (
     <div className="space-y-3">
-      {/* Search, sort, result count */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div role="search" className="relative w-full max-w-md flex-1">
+      {/* Search, sort and quick filters on one row (the search box takes its own row on phones) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div role="search" className="relative w-full sm:w-auto sm:min-w-64 sm:flex-1">
           <Search aria-hidden className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             ref={searchInputRef}
@@ -216,51 +211,43 @@ export function ModFilters({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <span id={sortLabelId} className="sr-only">
-            {t("list.sort")}
-          </span>
-          <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortType)}>
-            <SelectTrigger aria-labelledby={sortLabelId} className="w-[170px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">{t("sort.newest")}</SelectItem>
-              <SelectItem value="oldest">{t("sort.oldest")}</SelectItem>
-              <SelectItem value="name-asc">{t("sort.nameAsc")}</SelectItem>
-              <SelectItem value="name-desc">{t("sort.nameDesc")}</SelectItem>
-            </SelectContent>
-          </Select>
+        <span id={sortLabelId} className="sr-only">
+          {t("list.sort")}
+        </span>
+        <Select value={sortBy} onValueChange={(value) => onSortChange(value as SortType)}>
+          <SelectTrigger aria-labelledby={sortLabelId} className="w-auto min-w-28 gap-2">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">{t("sort.newest")}</SelectItem>
+            <SelectItem value="oldest">{t("sort.oldest")}</SelectItem>
+            <SelectItem value="name-asc">{t("sort.nameAsc")}</SelectItem>
+            <SelectItem value="name-desc">{t("sort.nameDesc")}</SelectItem>
+          </SelectContent>
+        </Select>
 
-          {/* Announced to screen readers whenever the result count changes */}
-          <Badge variant="secondary" role="status" aria-live="polite" className="px-3 py-1">
-            {t("list.count", { n: resultCount })}
-          </Badge>
+        <div role="group" aria-label={t("list.quickFilters")} className="contents">
+          <ToggleChip
+            pressed={!!filters.favoritesOnly}
+            onToggle={toggleFavorites}
+            icon={<Star className={filters.favoritesOnly ? "fill-current" : ""} />}
+          >
+            {t("list.favorites")}
+            {favoritesCount > 0 && <span className="text-xs text-muted-foreground">{favoritesCount}</span>}
+          </ToggleChip>
+          <DeveloperPicker
+            developers={developers}
+            selected={selectedDevelopers}
+            onToggle={toggleDeveloper}
+            onClear={() => setDevelopers([])}
+          />
+          {activeCount > 0 && (
+            <Button type="button" variant="ghost" onClick={() => onFiltersChange(() => ({}))}>
+              <X />
+              {t("list.resetFilters")}
+            </Button>
+          )}
         </div>
-      </div>
-
-      {/* Quick filters */}
-      <div role="group" aria-label={t("list.quickFilters")} className="flex flex-wrap items-center gap-2">
-        <ToggleChip
-          pressed={!!filters.favoritesOnly}
-          onToggle={toggleFavorites}
-          icon={<Star className={filters.favoritesOnly ? "fill-current" : ""} />}
-        >
-          {t("list.favorites")}
-          {favoritesCount > 0 && <span className="text-xs opacity-70">{favoritesCount}</span>}
-        </ToggleChip>
-        <DeveloperPicker
-          developers={developers}
-          selected={selectedDevelopers}
-          onToggle={toggleDeveloper}
-          onClear={() => setDevelopers([])}
-        />
-        {activeCount > 0 && (
-          <Button type="button" variant="ghost" size="sm" onClick={() => onFiltersChange(() => ({}))}>
-            <X />
-            {t("list.resetFilters")}
-          </Button>
-        )}
       </div>
 
       {/* Selected developers, each removable on its own */}

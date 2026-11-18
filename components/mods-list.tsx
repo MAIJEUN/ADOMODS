@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useState, useMemo, useEffect, useLayoutEffect, useCallback, useRef } from "react"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Loader2, Sparkles } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { stripDiscordEmoji } from "@/lib/discord-markdown"
 import { useFavorites } from "@/lib/favorites"
 import { matchesQuery, toChosungKey } from "@/lib/hangul"
@@ -22,7 +22,6 @@ import {
 import { useT } from "@/lib/use-lang"
 import { isPlainClick, ModCard, useMods } from "@/components/mod-card"
 import { useModDialog } from "@/components/mod-detail"
-import { DeveloperAvatar } from "@/components/developer"
 import { DiscordText } from "@/components/mod-markdown"
 import { HorizontalScroller } from "@/components/horizontal-scroller"
 
@@ -96,11 +95,8 @@ function RecentMods({ mods, onOpen }: { mods: Mod[]; onOpen: (mod: Mod) => void 
   if (mods.length === 0) return null
 
   return (
-    <section className="space-y-3">
-      <h2 className="flex items-center gap-2 text-lg font-semibold">
-        <Sparkles className="h-4 w-4 text-primary" />
-        {t("list.recent")}
-      </h2>
+    <section className="space-y-2.5">
+      <h2 className="text-sm font-medium text-muted-foreground">{t("list.recent")}</h2>
       <HorizontalScroller className="gap-2">
         {mods.map((mod) => (
           <a
@@ -111,13 +107,12 @@ function RecentMods({ mods, onOpen }: { mods: Mod[]; onOpen: (mod: Mod) => void 
               e.preventDefault()
               onOpen(mod)
             }}
-            className="flex w-52 shrink-0 snap-start flex-col gap-1 rounded-lg border border-border bg-card px-3 py-2 transition-colors hover:border-primary/50"
+            className="flex w-48 shrink-0 snap-start flex-col rounded-lg border border-border bg-card px-3 py-2 transition-colors hover:bg-accent"
           >
             <span className="truncate text-sm font-semibold">
               <DiscordText text={mod.name} />
             </span>
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <DeveloperAvatar mod={mod} />
+            <span className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="truncate">{mod.cachedUsername}</span>
               <span className="ml-auto shrink-0">{formatShortDate(mod.uploadedTimestamp, locale)}</span>
             </span>
@@ -229,6 +224,8 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
       })
   }, [modsArray, searchIndex, filters, favorites, debouncedSearch, sortBy])
 
+  const listedCount = useMemo(() => modsArray.filter(isListedMod).length, [modsArray])
+
   const activeFilterCount = countActiveFilters(filters)
   const isFiltering = activeFilterCount > 0 || debouncedSearch.trim() !== ""
 
@@ -265,19 +262,27 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
   }, [])
 
   return (
-    <div className="space-y-6">
-      <ModFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchInputRef={searchInputRef}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        filters={filters}
-        onFiltersChange={setFilters}
-        developers={developers}
-        resultCount={filteredAndSortedMods.length}
-        favoritesCount={favorites.size}
-      />
+    <div className="space-y-8">
+      <div className="space-y-5">
+        <header className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight">
+            {t("home.title")}
+            {listedCount > 0 && <span className="ml-2 font-medium text-muted-foreground/70">{listedCount}</span>}
+          </h1>
+          <p className="text-sm text-muted-foreground">{t("home.subtitle")}</p>
+        </header>
+        <ModFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchInputRef={searchInputRef}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          filters={filters}
+          onFiltersChange={setFilters}
+          developers={developers}
+          favoritesCount={favorites.size}
+        />
+      </div>
 
       {!isFiltering && !isLoading && !error && <RecentMods mods={recentMods} onOpen={openMod} />}
 
@@ -304,7 +309,11 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
 
       {/* Mods Grid */}
       {!isLoading && !error && (
-        <>
+        <section className="space-y-2.5">
+          {/* Announced to screen readers whenever the result count changes */}
+          <h2 role="status" aria-live="polite" className="text-sm font-medium text-muted-foreground">
+            {isFiltering ? t("list.results", { n: filteredAndSortedMods.length }) : t("list.all")}
+          </h2>
           {filteredAndSortedMods.length === 0 ? (
             <Card>
               <CardHeader>
@@ -334,13 +343,13 @@ export default function ModsList({ initialMods }: { initialMods?: Mod[] }) {
               </CardHeader>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
               {visibleMods.map((mod: Mod, index: number) => (
                 <ModCard key={getModId(mod) || index} mod={mod} onOpen={openMod} eager={index < EAGER_CARDS} />
               ))}
             </div>
           )}
-        </>
+        </section>
       )}
 
       {visibleCount < filteredAndSortedMods.length && <LoadMoreSentinel onLoadMore={loadMore} />}

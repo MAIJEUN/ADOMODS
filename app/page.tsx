@@ -23,7 +23,6 @@ export default async function Home() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
-      <h1 className="sr-only">ADOMODS - 얼불춤(A Dance of Fire and Ice) 모드 목록</h1>
       <ModsList initialMods={mods} />
     </>
   )
